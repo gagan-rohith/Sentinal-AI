@@ -1,0 +1,2744 @@
+[
+  {
+    "title": "orders-service 5xx spike after traffic increase",
+    "description": "orders-service is returning HTTP 500 and 503 errors for a large share of requests. Latency climbed sharply at the same time as a traffic increase. Requests appear to be waiting on the database.",
+    "service": "orders-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-02T04:01:00Z",
+    "symptoms": [
+      "HTTP 5xx error rate above 15%",
+      "p99 latency above 4 seconds",
+      "request threads blocked waiting for database connections",
+      "traffic roughly 2.5x normal"
+    ],
+    "error_messages": [
+      "HikariPool-1 - Connection is not available, request timed out after 30000ms",
+      "FATAL: remaining connection slots are reserved for non-replication superuser connections"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00001",
+        "change_type": "deployment",
+        "description": "v2.11.0: Copy change on order confirmation page",
+        "timestamp": "2026-03-02T01:01:00Z"
+      },
+      {
+        "change_id": "chg-1001",
+        "change_type": "traffic",
+        "description": "Flash sale campaign launched; traffic about 2.5x baseline",
+        "timestamp": "2026-03-02T03:36:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 20.0,
+      "p99_latency_ms": 4674.77,
+      "requests_per_sec": 1117.64,
+      "db_connections_in_use": 100.0,
+      "db_pool_wait_ms": 10446.98
+    },
+    "deployment_id": "dep-00001",
+    "tags": [
+      "database",
+      "postgres",
+      "connection-pool",
+      "5xx",
+      "traffic",
+      "orders-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "PostgreSQL connection pool exhaustion. The traffic surge from the flash sale saturated the fixed pool of 100 connections, slow queries held connections longer, and requests queued until they timed out and returned 5xx.",
+    "root_cause_category": "postgres_pool_exhaustion",
+    "expected_remediation": "Raise the connection pool size within the database max_connections budget, put PgBouncer in front of PostgreSQL, terminate idle-in-transaction sessions, rate limit campaign traffic, and restart the service only if connections have leaked.",
+    "incident_id": "INC-1001",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "postgres-connection-pool-exhaustion",
+      "api-5xx-spike"
+    ]
+  },
+  {
+    "title": "payments-service 5xx spike after traffic increase",
+    "description": "payments-service is returning HTTP 500 and 503 errors for a large share of requests. Latency climbed sharply at the same time as a traffic increase. Requests appear to be waiting on the database.",
+    "service": "payments-service",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-03-03T09:15:00Z",
+    "symptoms": [
+      "HTTP 5xx error rate above 15%",
+      "p99 latency above 4 seconds",
+      "request threads blocked waiting for database connections",
+      "traffic roughly 2.5x normal"
+    ],
+    "error_messages": [
+      "HikariPool-1 - Connection is not available, request timed out after 30000ms",
+      "FATAL: remaining connection slots are reserved for non-replication superuser connections"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00012",
+        "change_type": "deployment",
+        "description": "v2.11.0: Copy change on order confirmation page",
+        "timestamp": "2026-03-03T06:15:00Z"
+      },
+      {
+        "change_id": "chg-1002",
+        "change_type": "traffic",
+        "description": "Flash sale campaign launched; traffic about 2.5x baseline",
+        "timestamp": "2026-03-03T08:50:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 16.61,
+      "p99_latency_ms": 4063.43,
+      "requests_per_sec": 971.52,
+      "db_connections_in_use": 100.0,
+      "db_pool_wait_ms": 8808.54
+    },
+    "deployment_id": "dep-00012",
+    "tags": [
+      "database",
+      "postgres",
+      "connection-pool",
+      "5xx",
+      "traffic",
+      "payments-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "PostgreSQL connection pool exhaustion. The traffic surge from the flash sale saturated the fixed pool of 100 connections, slow queries held connections longer, and requests queued until they timed out and returned 5xx.",
+    "root_cause_category": "postgres_pool_exhaustion",
+    "expected_remediation": "Raise the connection pool size within the database max_connections budget, put PgBouncer in front of PostgreSQL, terminate idle-in-transaction sessions, rate limit campaign traffic, and restart the service only if connections have leaked.",
+    "incident_id": "INC-1002",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "postgres-connection-pool-exhaustion",
+      "api-5xx-spike"
+    ]
+  },
+  {
+    "title": "orders-service pods OOMKilled and restarting",
+    "description": "Pods for orders-service are being terminated with exit code 137 and restarting. Memory climbs steadily until each container is killed.",
+    "service": "orders-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-04T08:08:00Z",
+    "symptoms": [
+      "pods restarting with exit code 137",
+      "container memory at 99% of limit before each restart",
+      "intermittent 503 responses during restarts"
+    ],
+    "error_messages": [
+      "Container orders-service terminated: reason=OOMKilled exitCode=137",
+      "Back-off restarting failed container"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00013",
+        "change_type": "deployment",
+        "description": "v2.12.0: Increase in-process product catalog cache from 256MB to 2GB",
+        "timestamp": "2026-03-04T07:48:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 5.49,
+      "memory_pct": 95.62,
+      "pod_restarts": 6.34
+    },
+    "deployment_id": "dep-00013",
+    "tags": [
+      "kubernetes",
+      "oom",
+      "memory",
+      "restarts",
+      "orders-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The container memory limit of 512Mi is too small after a release enlarged the in-process cache. Heap usage grows until the kernel OOM kills the container.",
+    "root_cause_category": "k8s_oom_killed",
+    "expected_remediation": "Raise the memory limit to 1Gi and cap the cache size through configuration. If that cannot be done quickly, roll back the release that enlarged the cache.",
+    "incident_id": "INC-1003",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "k8s-oom-killed"
+    ]
+  },
+  {
+    "title": "search-api pods OOMKilled and restarting",
+    "description": "Pods for search-api are being terminated with exit code 137 and restarting. Memory climbs steadily until each container is killed.",
+    "service": "search-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-05T04:43:00Z",
+    "symptoms": [
+      "pods restarting with exit code 137",
+      "container memory at 99% of limit before each restart",
+      "intermittent 503 responses during restarts"
+    ],
+    "error_messages": [
+      "Container search-api terminated: reason=OOMKilled exitCode=137",
+      "Back-off restarting failed container"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00014",
+        "change_type": "deployment",
+        "description": "v2.12.0: Increase in-process product catalog cache from 256MB to 2GB",
+        "timestamp": "2026-03-05T04:23:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 6.13,
+      "memory_pct": 100.0,
+      "pod_restarts": 7.02
+    },
+    "deployment_id": "dep-00014",
+    "tags": [
+      "kubernetes",
+      "oom",
+      "memory",
+      "restarts",
+      "search-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "The container memory limit of 512Mi is too small after a release enlarged the in-process cache. Heap usage grows until the kernel OOM kills the container.",
+    "root_cause_category": "k8s_oom_killed",
+    "expected_remediation": "Raise the memory limit to 1Gi and cap the cache size through configuration. If that cannot be done quickly, roll back the release that enlarged the cache.",
+    "incident_id": "INC-1004",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "k8s-oom-killed"
+    ]
+  },
+  {
+    "title": "analytics-consumer pods OOMKilled and restarting",
+    "description": "Pods for analytics-consumer are being terminated with exit code 137 and restarting. Memory climbs steadily until each container is killed.",
+    "service": "analytics-consumer",
+    "environment": "staging",
+    "severity": "sev3",
+    "timestamp": "2026-03-06T18:05:00Z",
+    "symptoms": [
+      "pods restarting with exit code 137",
+      "container memory at 99% of limit before each restart",
+      "intermittent 503 responses during restarts"
+    ],
+    "error_messages": [
+      "Container analytics-consumer terminated: reason=OOMKilled exitCode=137",
+      "Back-off restarting failed container"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00025",
+        "change_type": "deployment",
+        "description": "v2.12.0: Increase in-process product catalog cache from 256MB to 2GB",
+        "timestamp": "2026-03-06T17:45:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 5.46,
+      "memory_pct": 97.78,
+      "pod_restarts": 6.33
+    },
+    "deployment_id": "dep-00025",
+    "tags": [
+      "kubernetes",
+      "oom",
+      "memory",
+      "restarts",
+      "analytics-consumer",
+      "staging"
+    ],
+    "ground_truth_root_cause": "The container memory limit of 512Mi is too small after a release enlarged the in-process cache. Heap usage grows until the kernel OOM kills the container.",
+    "root_cause_category": "k8s_oom_killed",
+    "expected_remediation": "Raise the memory limit to 1Gi and cap the cache size through configuration. If that cannot be done quickly, roll back the release that enlarged the cache.",
+    "incident_id": "INC-1005",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "k8s-oom-killed"
+    ]
+  },
+  {
+    "title": "Kafka consumer lag growing for analytics-consumer",
+    "description": "Consumer lag for the analytics-consumer consumer group has grown past 200k messages and throughput has dropped. The group keeps rebalancing.",
+    "service": "analytics-consumer",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-07T19:27:00Z",
+    "symptoms": [
+      "consumer lag above 200k messages and rising",
+      "consumer throughput dropped by over 90%",
+      "frequent consumer group rebalances"
+    ],
+    "error_messages": [
+      "consumer poll timeout has expired; leaving group",
+      "Attempt to heartbeat failed since group is rebalancing"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1006",
+        "change_type": "config",
+        "description": "Increased max.poll.records from 500 to 5000",
+        "timestamp": "2026-03-07T19:07:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "kafka_consumer_lag": 251572.26,
+      "consumer_throughput": 37.25,
+      "rebalances_per_min": 6.24
+    },
+    "deployment_id": null,
+    "tags": [
+      "kafka",
+      "consumer-lag",
+      "rebalance",
+      "streaming",
+      "analytics-consumer",
+      "production"
+    ],
+    "ground_truth_root_cause": "The consumer group is stuck in a rebalance loop. Raising max.poll.records to 5000 made each batch take longer than max.poll.interval.ms, so consumers are evicted from the group before they commit offsets.",
+    "root_cause_category": "kafka_consumer_lag",
+    "expected_remediation": "Revert max.poll.records to 500 or raise max.poll.interval.ms above the worst batch time, then scale consumers to the partition count to drain the backlog.",
+    "incident_id": "INC-1006",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "kafka-consumer-lag"
+    ]
+  },
+  {
+    "title": "Kafka consumer lag growing for notification-worker",
+    "description": "Consumer lag for the notification-worker consumer group has grown past 200k messages and throughput has dropped. The group keeps rebalancing.",
+    "service": "notification-worker",
+    "environment": "production",
+    "severity": "sev3",
+    "timestamp": "2026-03-08T02:01:00Z",
+    "symptoms": [
+      "consumer lag above 200k messages and rising",
+      "consumer throughput dropped by over 90%",
+      "frequent consumer group rebalances"
+    ],
+    "error_messages": [
+      "consumer poll timeout has expired; leaving group",
+      "Attempt to heartbeat failed since group is rebalancing"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1007",
+        "change_type": "config",
+        "description": "Increased max.poll.records from 500 to 5000",
+        "timestamp": "2026-03-08T01:41:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "kafka_consumer_lag": 282207.44,
+      "consumer_throughput": 0.0,
+      "rebalances_per_min": 6.52
+    },
+    "deployment_id": null,
+    "tags": [
+      "kafka",
+      "consumer-lag",
+      "rebalance",
+      "streaming",
+      "notification-worker",
+      "production"
+    ],
+    "ground_truth_root_cause": "The consumer group is stuck in a rebalance loop. Raising max.poll.records to 5000 made each batch take longer than max.poll.interval.ms, so consumers are evicted from the group before they commit offsets.",
+    "root_cause_category": "kafka_consumer_lag",
+    "expected_remediation": "Revert max.poll.records to 500 or raise max.poll.interval.ms above the worst batch time, then scale consumers to the partition count to drain the backlog.",
+    "incident_id": "INC-1007",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "kafka-consumer-lag"
+    ]
+  },
+  {
+    "title": "Kafka consumer lag growing for billing-service",
+    "description": "Consumer lag for the billing-service consumer group has grown past 200k messages and throughput has dropped. The group keeps rebalancing.",
+    "service": "billing-service",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-03-09T03:13:00Z",
+    "symptoms": [
+      "consumer lag above 200k messages and rising",
+      "consumer throughput dropped by over 90%",
+      "frequent consumer group rebalances"
+    ],
+    "error_messages": [
+      "consumer poll timeout has expired; leaving group",
+      "Attempt to heartbeat failed since group is rebalancing"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1008",
+        "change_type": "config",
+        "description": "Increased max.poll.records from 500 to 5000",
+        "timestamp": "2026-03-09T02:53:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "kafka_consumer_lag": 249595.72,
+      "consumer_throughput": 85.16,
+      "rebalances_per_min": 6.02
+    },
+    "deployment_id": null,
+    "tags": [
+      "kafka",
+      "consumer-lag",
+      "rebalance",
+      "streaming",
+      "billing-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "The consumer group is stuck in a rebalance loop. Raising max.poll.records to 5000 made each batch take longer than max.poll.interval.ms, so consumers are evicted from the group before they commit offsets.",
+    "root_cause_category": "kafka_consumer_lag",
+    "expected_remediation": "Revert max.poll.records to 500 or raise max.poll.interval.ms above the worst batch time, then scale consumers to the partition count to drain the backlog.",
+    "incident_id": "INC-1008",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "kafka-consumer-lag"
+    ]
+  },
+  {
+    "title": "payments-service 5xx errors after deployment",
+    "description": "Minutes after a new release of payments-service, roughly a third of requests fail with HTTP 500. No traffic change was observed.",
+    "service": "payments-service",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-03-10T08:32:00Z",
+    "symptoms": [
+      "HTTP 500 rate jumped from under 1% to about 30%",
+      "errors started within minutes of a deployment",
+      "stack traces point to the response serializer"
+    ],
+    "error_messages": [
+      "java.lang.NullPointerException at AddressSerializer.serialize(AddressSerializer.java:48)",
+      "GET /api/v1/addresses 500 Internal Server Error"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00026",
+        "change_type": "deployment",
+        "description": "v2.13.0: Refactor serializer for address payloads",
+        "timestamp": "2026-03-10T08:20:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 29.91
+    },
+    "deployment_id": "dep-00026",
+    "tags": [
+      "deployment",
+      "regression",
+      "5xx",
+      "rollback",
+      "payments-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The latest deployment introduced a regression in the address response serializer. Records without an optional field throw a NullPointerException and return 500.",
+    "root_cause_category": "bad_deployment",
+    "expected_remediation": "Roll back to the previous version, then add a regression test for addresses without the optional field before redeploying.",
+    "incident_id": "INC-1009",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "api-5xx-spike",
+      "deployment-rollback"
+    ]
+  },
+  {
+    "title": "user-profile-service 5xx errors after deployment",
+    "description": "Minutes after a new release of user-profile-service, roughly a third of requests fail with HTTP 500. No traffic change was observed.",
+    "service": "user-profile-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-11T20:01:00Z",
+    "symptoms": [
+      "HTTP 500 rate jumped from under 1% to about 30%",
+      "errors started within minutes of a deployment",
+      "stack traces point to the response serializer"
+    ],
+    "error_messages": [
+      "java.lang.NullPointerException at AddressSerializer.serialize(AddressSerializer.java:48)",
+      "GET /api/v1/addresses 500 Internal Server Error"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00036",
+        "change_type": "deployment",
+        "description": "v2.13.0: Refactor serializer for address payloads",
+        "timestamp": "2026-03-11T19:49:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 28.1
+    },
+    "deployment_id": "dep-00036",
+    "tags": [
+      "deployment",
+      "regression",
+      "5xx",
+      "rollback",
+      "user-profile-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The latest deployment introduced a regression in the address response serializer. Records without an optional field throw a NullPointerException and return 500.",
+    "root_cause_category": "bad_deployment",
+    "expected_remediation": "Roll back to the previous version, then add a regression test for addresses without the optional field before redeploying.",
+    "incident_id": "INC-1010",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "api-5xx-spike",
+      "deployment-rollback"
+    ]
+  },
+  {
+    "title": "shipping-service 5xx errors after deployment",
+    "description": "Minutes after a new release of shipping-service, roughly a third of requests fail with HTTP 500. No traffic change was observed.",
+    "service": "shipping-service",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-03-12T18:12:00Z",
+    "symptoms": [
+      "HTTP 500 rate jumped from under 1% to about 30%",
+      "errors started within minutes of a deployment",
+      "stack traces point to the response serializer"
+    ],
+    "error_messages": [
+      "java.lang.NullPointerException at AddressSerializer.serialize(AddressSerializer.java:48)",
+      "GET /api/v1/addresses 500 Internal Server Error"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00037",
+        "change_type": "deployment",
+        "description": "v2.14.0: Refactor serializer for address payloads",
+        "timestamp": "2026-03-12T18:00:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 26.14
+    },
+    "deployment_id": "dep-00037",
+    "tags": [
+      "deployment",
+      "regression",
+      "5xx",
+      "rollback",
+      "shipping-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "The latest deployment introduced a regression in the address response serializer. Records without an optional field throw a NullPointerException and return 500.",
+    "root_cause_category": "bad_deployment",
+    "expected_remediation": "Roll back to the previous version, then add a regression test for addresses without the optional field before redeploying.",
+    "incident_id": "INC-1011",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "api-5xx-spike",
+      "deployment-rollback"
+    ]
+  },
+  {
+    "title": "DNS lookup failures from api-gateway",
+    "description": "api-gateway is intermittently failing to resolve internal service names. Calls to downstream services fail with lookup timeouts.",
+    "service": "api-gateway",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-03-13T18:26:00Z",
+    "symptoms": [
+      "intermittent name resolution timeouts",
+      "errors spread across all downstream dependencies",
+      "CoreDNS pods at high CPU"
+    ],
+    "error_messages": [
+      "dial tcp: lookup payments-service.commerce.svc.cluster.local on 10.96.0.10:53: i/o timeout",
+      "getaddrinfo EAI_AGAIN orders-service.commerce.svc.cluster.local"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1012",
+        "change_type": "infrastructure",
+        "description": "Node pool rotation reduced CoreDNS replicas from 3 to 1",
+        "timestamp": "2026-03-13T18:06:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 9.92,
+      "dns_lookup_errors_per_min": 912.85,
+      "coredns_cpu_pct": 100.0
+    },
+    "deployment_id": null,
+    "tags": [
+      "dns",
+      "coredns",
+      "kubernetes",
+      "networking",
+      "api-gateway",
+      "production"
+    ],
+    "ground_truth_root_cause": "CoreDNS was left with a single replica after a node pool rotation. With ndots:5 search path expansion each lookup produces several queries, and the single replica is overloaded and drops requests.",
+    "root_cause_category": "dns_resolution_failure",
+    "expected_remediation": "Scale CoreDNS back to at least 3 replicas, add a PodDisruptionBudget, enable NodeLocal DNSCache, and lower ndots for services that call external names.",
+    "incident_id": "INC-1012",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "dns-resolution-failure"
+    ]
+  },
+  {
+    "title": "DNS lookup failures from notification-worker",
+    "description": "notification-worker is intermittently failing to resolve internal service names. Calls to downstream services fail with lookup timeouts.",
+    "service": "notification-worker",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-14T08:28:00Z",
+    "symptoms": [
+      "intermittent name resolution timeouts",
+      "errors spread across all downstream dependencies",
+      "CoreDNS pods at high CPU"
+    ],
+    "error_messages": [
+      "dial tcp: lookup payments-service.commerce.svc.cluster.local on 10.96.0.10:53: i/o timeout",
+      "getaddrinfo EAI_AGAIN orders-service.commerce.svc.cluster.local"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1013",
+        "change_type": "infrastructure",
+        "description": "Node pool rotation reduced CoreDNS replicas from 3 to 1",
+        "timestamp": "2026-03-14T08:08:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 10.12,
+      "dns_lookup_errors_per_min": 892.14,
+      "coredns_cpu_pct": 100.0
+    },
+    "deployment_id": null,
+    "tags": [
+      "dns",
+      "coredns",
+      "kubernetes",
+      "networking",
+      "notification-worker",
+      "production"
+    ],
+    "ground_truth_root_cause": "CoreDNS was left with a single replica after a node pool rotation. With ndots:5 search path expansion each lookup produces several queries, and the single replica is overloaded and drops requests.",
+    "root_cause_category": "dns_resolution_failure",
+    "expected_remediation": "Scale CoreDNS back to at least 3 replicas, add a PodDisruptionBudget, enable NodeLocal DNSCache, and lower ndots for services that call external names.",
+    "incident_id": "INC-1013",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "dns-resolution-failure"
+    ]
+  },
+  {
+    "title": "DNS lookup failures from inventory-service",
+    "description": "inventory-service is intermittently failing to resolve internal service names. Calls to downstream services fail with lookup timeouts.",
+    "service": "inventory-service",
+    "environment": "staging",
+    "severity": "sev3",
+    "timestamp": "2026-03-15T19:17:00Z",
+    "symptoms": [
+      "intermittent name resolution timeouts",
+      "errors spread across all downstream dependencies",
+      "CoreDNS pods at high CPU"
+    ],
+    "error_messages": [
+      "dial tcp: lookup payments-service.commerce.svc.cluster.local on 10.96.0.10:53: i/o timeout",
+      "getaddrinfo EAI_AGAIN orders-service.commerce.svc.cluster.local"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1014",
+        "change_type": "infrastructure",
+        "description": "Node pool rotation reduced CoreDNS replicas from 3 to 1",
+        "timestamp": "2026-03-15T18:57:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 10.22,
+      "dns_lookup_errors_per_min": 899.54,
+      "coredns_cpu_pct": 100.0
+    },
+    "deployment_id": null,
+    "tags": [
+      "dns",
+      "coredns",
+      "kubernetes",
+      "networking",
+      "inventory-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "CoreDNS was left with a single replica after a node pool rotation. With ndots:5 search path expansion each lookup produces several queries, and the single replica is overloaded and drops requests.",
+    "root_cause_category": "dns_resolution_failure",
+    "expected_remediation": "Scale CoreDNS back to at least 3 replicas, add a PodDisruptionBudget, enable NodeLocal DNSCache, and lower ndots for services that call external names.",
+    "incident_id": "INC-1014",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "dns-resolution-failure"
+    ]
+  },
+  {
+    "title": "TLS handshake failures on api-gateway",
+    "description": "Clients connecting to api-gateway fail the TLS handshake. Errors started at midnight UTC and affect every client.",
+    "service": "api-gateway",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-03-16T01:48:00Z",
+    "symptoms": [
+      "all HTTPS clients failing handshake",
+      "errors started at a round clock time",
+      "no recent deployment"
+    ],
+    "error_messages": [
+      "x509: certificate has expired or is not yet valid",
+      "SSL routines:ssl3_read_bytes:sslv3 alert certificate expired"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "error_rate_pct": 97.69,
+      "tls_handshake_failures_per_min": 5054.87
+    },
+    "deployment_id": null,
+    "tags": [
+      "tls",
+      "certificates",
+      "cert-manager",
+      "expiry",
+      "api-gateway",
+      "production"
+    ],
+    "ground_truth_root_cause": "The TLS certificate for api-gateway expired because cert-manager could not renew it. The ACME DNS-01 challenge has been failing since the DNS provider credentials were revoked.",
+    "root_cause_category": "tls_certificate_expired",
+    "expected_remediation": "Issue and install a replacement certificate, restore the DNS provider credentials used by cert-manager, and alert on certificates expiring within 21 days.",
+    "incident_id": "INC-1015",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "tls-certificate-expiration"
+    ]
+  },
+  {
+    "title": "TLS handshake failures on payments-service",
+    "description": "Clients connecting to payments-service fail the TLS handshake. Errors started at midnight UTC and affect every client.",
+    "service": "payments-service",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-03-17T06:44:00Z",
+    "symptoms": [
+      "all HTTPS clients failing handshake",
+      "errors started at a round clock time",
+      "no recent deployment"
+    ],
+    "error_messages": [
+      "x509: certificate has expired or is not yet valid",
+      "SSL routines:ssl3_read_bytes:sslv3 alert certificate expired"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "error_rate_pct": 93.14,
+      "tls_handshake_failures_per_min": 4969.34
+    },
+    "deployment_id": null,
+    "tags": [
+      "tls",
+      "certificates",
+      "cert-manager",
+      "expiry",
+      "payments-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The TLS certificate for payments-service expired because cert-manager could not renew it. The ACME DNS-01 challenge has been failing since the DNS provider credentials were revoked.",
+    "root_cause_category": "tls_certificate_expired",
+    "expected_remediation": "Issue and install a replacement certificate, restore the DNS provider credentials used by cert-manager, and alert on certificates expiring within 21 days.",
+    "incident_id": "INC-1016",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "tls-certificate-expiration"
+    ]
+  },
+  {
+    "title": "TLS handshake failures on auth-service",
+    "description": "Clients connecting to auth-service fail the TLS handshake. Errors started at midnight UTC and affect every client.",
+    "service": "auth-service",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-03-18T14:21:00Z",
+    "symptoms": [
+      "all HTTPS clients failing handshake",
+      "errors started at a round clock time",
+      "no recent deployment"
+    ],
+    "error_messages": [
+      "x509: certificate has expired or is not yet valid",
+      "SSL routines:ssl3_read_bytes:sslv3 alert certificate expired"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "error_rate_pct": 100.0,
+      "tls_handshake_failures_per_min": 5771.17
+    },
+    "deployment_id": null,
+    "tags": [
+      "tls",
+      "certificates",
+      "cert-manager",
+      "expiry",
+      "auth-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "The TLS certificate for auth-service expired because cert-manager could not renew it. The ACME DNS-01 challenge has been failing since the DNS provider credentials were revoked.",
+    "root_cause_category": "tls_certificate_expired",
+    "expected_remediation": "Issue and install a replacement certificate, restore the DNS provider credentials used by cert-manager, and alert on certificates expiring within 21 days.",
+    "incident_id": "INC-1017",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "tls-certificate-expiration"
+    ]
+  },
+  {
+    "title": "Spike in 401 responses on auth-service",
+    "description": "auth-service is rejecting valid user sessions with HTTP 401. The failures began shortly after the identity provider rotated its signing key.",
+    "service": "auth-service",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-03-19T09:09:00Z",
+    "symptoms": [
+      "401 rate above 40% for logged in users",
+      "only tokens issued after the rotation are rejected",
+      "users forced to log in repeatedly"
+    ],
+    "error_messages": [
+      "JWT verification failed: kid 2026-key-b not found in JWKS",
+      "401 Unauthorized: invalid token signature"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1018",
+        "change_type": "secret_rotation",
+        "description": "Identity provider rotated JWT signing key",
+        "timestamp": "2026-03-19T08:39:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 45.81,
+      "auth_failures_per_min": 4009.21
+    },
+    "deployment_id": null,
+    "tags": [
+      "auth",
+      "jwt",
+      "jwks",
+      "key-rotation",
+      "auth-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The identity provider rotated its JWT signing key, but auth-service caches the JWKS for 24 hours and does not refetch when it sees an unknown key id, so tokens signed with the new key are rejected.",
+    "root_cause_category": "jwt_auth_failure",
+    "expected_remediation": "Force a JWKS refresh by restarting or reloading the service, change the verifier to refetch JWKS on unknown kid, and publish new keys before they are used for signing.",
+    "incident_id": "INC-1018",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "jwt-authentication-failure"
+    ]
+  },
+  {
+    "title": "Spike in 401 responses on user-profile-service",
+    "description": "user-profile-service is rejecting valid user sessions with HTTP 401. The failures began shortly after the identity provider rotated its signing key.",
+    "service": "user-profile-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-20T07:48:00Z",
+    "symptoms": [
+      "401 rate above 40% for logged in users",
+      "only tokens issued after the rotation are rejected",
+      "users forced to log in repeatedly"
+    ],
+    "error_messages": [
+      "JWT verification failed: kid 2026-key-b not found in JWKS",
+      "401 Unauthorized: invalid token signature"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1019",
+        "change_type": "secret_rotation",
+        "description": "Identity provider rotated JWT signing key",
+        "timestamp": "2026-03-20T07:18:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 45.87,
+      "auth_failures_per_min": 4229.08
+    },
+    "deployment_id": null,
+    "tags": [
+      "auth",
+      "jwt",
+      "jwks",
+      "key-rotation",
+      "user-profile-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The identity provider rotated its JWT signing key, but user-profile-service caches the JWKS for 24 hours and does not refetch when it sees an unknown key id, so tokens signed with the new key are rejected.",
+    "root_cause_category": "jwt_auth_failure",
+    "expected_remediation": "Force a JWKS refresh by restarting or reloading the service, change the verifier to refetch JWKS on unknown kid, and publish new keys before they are used for signing.",
+    "incident_id": "INC-1019",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "jwt-authentication-failure"
+    ]
+  },
+  {
+    "title": "Spike in 401 responses on checkout-api",
+    "description": "checkout-api is rejecting valid user sessions with HTTP 401. The failures began shortly after the identity provider rotated its signing key.",
+    "service": "checkout-api",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-03-21T11:06:00Z",
+    "symptoms": [
+      "401 rate above 40% for logged in users",
+      "only tokens issued after the rotation are rejected",
+      "users forced to log in repeatedly"
+    ],
+    "error_messages": [
+      "JWT verification failed: kid 2026-key-b not found in JWKS",
+      "401 Unauthorized: invalid token signature"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1020",
+        "change_type": "secret_rotation",
+        "description": "Identity provider rotated JWT signing key",
+        "timestamp": "2026-03-21T10:36:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 38.69,
+      "auth_failures_per_min": 3623.16
+    },
+    "deployment_id": null,
+    "tags": [
+      "auth",
+      "jwt",
+      "jwks",
+      "key-rotation",
+      "checkout-api",
+      "staging"
+    ],
+    "ground_truth_root_cause": "The identity provider rotated its JWT signing key, but checkout-api caches the JWKS for 24 hours and does not refetch when it sees an unknown key id, so tokens signed with the new key are rejected.",
+    "root_cause_category": "jwt_auth_failure",
+    "expected_remediation": "Force a JWKS refresh by restarting or reloading the service, change the verifier to refetch JWKS on unknown kid, and publish new keys before they are used for signing.",
+    "incident_id": "INC-1020",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "jwt-authentication-failure"
+    ]
+  },
+  {
+    "title": "search-api latency up as Redis evicts keys",
+    "description": "Redis used by search-api hit maxmemory and is evicting keys. Cache hit ratio collapsed and latency and database load increased.",
+    "service": "search-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-22T03:24:00Z",
+    "symptoms": [
+      "Redis memory at maxmemory",
+      "thousands of evictions per second",
+      "cache hit ratio dropped from 95% to about 40%"
+    ],
+    "error_messages": [
+      "OOM command not allowed when used memory > 'maxmemory'"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00057",
+        "change_type": "deployment",
+        "description": "v2.16.0: Store user sessions in the shared cache cluster",
+        "timestamp": "2026-03-22T02:39:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 1285.23,
+      "redis_memory_pct": 96.94,
+      "redis_evicted_keys_per_sec": 4093.78,
+      "cache_hit_ratio_pct": 47.02
+    },
+    "deployment_id": "dep-00057",
+    "tags": [
+      "redis",
+      "cache",
+      "eviction",
+      "memory",
+      "search-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "Redis reached maxmemory because a release started writing session keys without a TTL. The allkeys-lru policy evicts hot cache entries instead, so the hit ratio collapsed and requests fell through to the database.",
+    "root_cause_category": "redis_memory_eviction",
+    "expected_remediation": "Set a TTL on session keys and expire the existing ones, move sessions to a separate Redis instance, and alert on memory above 85% of maxmemory.",
+    "incident_id": "INC-1021",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "redis-memory-pressure"
+    ]
+  },
+  {
+    "title": "checkout-api latency up as Redis evicts keys",
+    "description": "Redis used by checkout-api hit maxmemory and is evicting keys. Cache hit ratio collapsed and latency and database load increased.",
+    "service": "checkout-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-23T04:22:00Z",
+    "symptoms": [
+      "Redis memory at maxmemory",
+      "thousands of evictions per second",
+      "cache hit ratio dropped from 95% to about 40%"
+    ],
+    "error_messages": [
+      "OOM command not allowed when used memory > 'maxmemory'"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00068",
+        "change_type": "deployment",
+        "description": "v2.16.0: Store user sessions in the shared cache cluster",
+        "timestamp": "2026-03-23T03:37:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 1237.68,
+      "redis_memory_pct": 98.89,
+      "redis_evicted_keys_per_sec": 4142.46,
+      "cache_hit_ratio_pct": 45.48
+    },
+    "deployment_id": "dep-00068",
+    "tags": [
+      "redis",
+      "cache",
+      "eviction",
+      "memory",
+      "checkout-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "Redis reached maxmemory because a release started writing session keys without a TTL. The allkeys-lru policy evicts hot cache entries instead, so the hit ratio collapsed and requests fell through to the database.",
+    "root_cause_category": "redis_memory_eviction",
+    "expected_remediation": "Set a TTL on session keys and expire the existing ones, move sessions to a separate Redis instance, and alert on memory above 85% of maxmemory.",
+    "incident_id": "INC-1022",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "redis-memory-pressure"
+    ]
+  },
+  {
+    "title": "user-profile-service latency up as Redis evicts keys",
+    "description": "Redis used by user-profile-service hit maxmemory and is evicting keys. Cache hit ratio collapsed and latency and database load increased.",
+    "service": "user-profile-service",
+    "environment": "staging",
+    "severity": "sev3",
+    "timestamp": "2026-03-24T12:38:00Z",
+    "symptoms": [
+      "Redis memory at maxmemory",
+      "thousands of evictions per second",
+      "cache hit ratio dropped from 95% to about 40%"
+    ],
+    "error_messages": [
+      "OOM command not allowed when used memory > 'maxmemory'"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00069",
+        "change_type": "deployment",
+        "description": "v2.17.0: Store user sessions in the shared cache cluster",
+        "timestamp": "2026-03-24T11:53:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 1378.63,
+      "redis_memory_pct": 100.0,
+      "redis_evicted_keys_per_sec": 4472.19,
+      "cache_hit_ratio_pct": 40.75
+    },
+    "deployment_id": "dep-00069",
+    "tags": [
+      "redis",
+      "cache",
+      "eviction",
+      "memory",
+      "user-profile-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "Redis reached maxmemory because a release started writing session keys without a TTL. The allkeys-lru policy evicts hot cache entries instead, so the hit ratio collapsed and requests fell through to the database.",
+    "root_cause_category": "redis_memory_eviction",
+    "expected_remediation": "Set a TTL on session keys and expire the existing ones, move sessions to a separate Redis instance, and alert on memory above 85% of maxmemory.",
+    "incident_id": "INC-1023",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "redis-memory-pressure"
+    ]
+  },
+  {
+    "title": "search-api p99 latency high while CPU looks normal",
+    "description": "search-api p99 latency has tripled. Average CPU utilization looks moderate, but containers are being throttled heavily.",
+    "service": "search-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-25T09:51:00Z",
+    "symptoms": [
+      "p99 latency tripled",
+      "average CPU utilization around 45%",
+      "CFS throttled periods above 60%"
+    ],
+    "error_messages": [
+      "request exceeded latency budget of 500ms"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1024",
+        "change_type": "config",
+        "description": "Reduced CPU limit from 2 cores to 500m for cost savings",
+        "timestamp": "2026-03-25T08:51:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 1877.33,
+      "cpu_pct": 47.18,
+      "cpu_throttled_pct": 72.79
+    },
+    "deployment_id": null,
+    "tags": [
+      "kubernetes",
+      "cpu",
+      "throttling",
+      "latency",
+      "search-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "The CPU limit was cut to 500m. Request handling is bursty, so containers use their CFS quota early in each period and are throttled, which inflates latency even though average utilization looks moderate.",
+    "root_cause_category": "cpu_throttling",
+    "expected_remediation": "Restore the CPU limit to 2 cores or remove the limit while keeping the request, and alert on container_cpu_cfs_throttled_periods_total.",
+    "incident_id": "INC-1024",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "cpu-throttling"
+    ]
+  },
+  {
+    "title": "orders-service p99 latency high while CPU looks normal",
+    "description": "orders-service p99 latency has tripled. Average CPU utilization looks moderate, but containers are being throttled heavily.",
+    "service": "orders-service",
+    "environment": "production",
+    "severity": "sev3",
+    "timestamp": "2026-03-26T02:46:00Z",
+    "symptoms": [
+      "p99 latency tripled",
+      "average CPU utilization around 45%",
+      "CFS throttled periods above 60%"
+    ],
+    "error_messages": [
+      "request exceeded latency budget of 500ms"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1025",
+        "change_type": "config",
+        "description": "Reduced CPU limit from 2 cores to 500m for cost savings",
+        "timestamp": "2026-03-26T01:46:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 1697.08,
+      "cpu_pct": 45.03,
+      "cpu_throttled_pct": 67.78
+    },
+    "deployment_id": null,
+    "tags": [
+      "kubernetes",
+      "cpu",
+      "throttling",
+      "latency",
+      "orders-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The CPU limit was cut to 500m. Request handling is bursty, so containers use their CFS quota early in each period and are throttled, which inflates latency even though average utilization looks moderate.",
+    "root_cause_category": "cpu_throttling",
+    "expected_remediation": "Restore the CPU limit to 2 cores or remove the limit while keeping the request, and alert on container_cpu_cfs_throttled_periods_total.",
+    "incident_id": "INC-1025",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "cpu-throttling"
+    ]
+  },
+  {
+    "title": "inventory-service p99 latency high while CPU looks normal",
+    "description": "inventory-service p99 latency has tripled. Average CPU utilization looks moderate, but containers are being throttled heavily.",
+    "service": "inventory-service",
+    "environment": "staging",
+    "severity": "sev3",
+    "timestamp": "2026-03-27T15:34:00Z",
+    "symptoms": [
+      "p99 latency tripled",
+      "average CPU utilization around 45%",
+      "CFS throttled periods above 60%"
+    ],
+    "error_messages": [
+      "request exceeded latency budget of 500ms"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1026",
+        "change_type": "config",
+        "description": "Reduced CPU limit from 2 cores to 500m for cost savings",
+        "timestamp": "2026-03-27T14:34:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 1774.58,
+      "cpu_pct": 47.95,
+      "cpu_throttled_pct": 69.9
+    },
+    "deployment_id": null,
+    "tags": [
+      "kubernetes",
+      "cpu",
+      "throttling",
+      "latency",
+      "inventory-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "The CPU limit was cut to 500m. Request handling is bursty, so containers use their CFS quota early in each period and are throttled, which inflates latency even though average utilization looks moderate.",
+    "root_cause_category": "cpu_throttling",
+    "expected_remediation": "Restore the CPU limit to 2 cores or remove the limit while keeping the request, and alert on container_cpu_cfs_throttled_periods_total.",
+    "incident_id": "INC-1026",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "cpu-throttling"
+    ]
+  },
+  {
+    "title": "analytics-consumer pods evicted due to disk pressure",
+    "description": "Nodes running analytics-consumer report DiskPressure and the kubelet is evicting pods. Writes fail with no space left on device.",
+    "service": "analytics-consumer",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-28T04:59:00Z",
+    "symptoms": [
+      "node condition DiskPressure=True",
+      "pods evicted for ephemeral-storage",
+      "write failures with ENOSPC"
+    ],
+    "error_messages": [
+      "write /var/log/app/analytics-consumer.log: no space left on device",
+      "The node was low on resource: ephemeral-storage"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1027",
+        "change_type": "config",
+        "description": "Set LOG_LEVEL=DEBUG while investigating a billing bug",
+        "timestamp": "2026-03-28T01:59:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "disk_used_pct": 95.91,
+      "pod_evictions": 4.57,
+      "log_bytes_per_sec": 2286167.04
+    },
+    "deployment_id": null,
+    "tags": [
+      "disk",
+      "kubernetes",
+      "logging",
+      "eviction",
+      "analytics-consumer",
+      "production"
+    ],
+    "ground_truth_root_cause": "Debug logging was left enabled after an investigation. The service wrote full request payloads to local log files, filled the node's ephemeral storage and triggered kubelet evictions.",
+    "root_cause_category": "disk_pressure",
+    "expected_remediation": "Set LOG_LEVEL back to INFO, clear the oversized log files, set ephemeral-storage requests and limits, and log to stdout with rotation.",
+    "incident_id": "INC-1027",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "disk-pressure"
+    ]
+  },
+  {
+    "title": "billing-service pods evicted due to disk pressure",
+    "description": "Nodes running billing-service report DiskPressure and the kubelet is evicting pods. Writes fail with no space left on device.",
+    "service": "billing-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-29T13:05:00Z",
+    "symptoms": [
+      "node condition DiskPressure=True",
+      "pods evicted for ephemeral-storage",
+      "write failures with ENOSPC"
+    ],
+    "error_messages": [
+      "write /var/log/app/billing-service.log: no space left on device",
+      "The node was low on resource: ephemeral-storage"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1028",
+        "change_type": "config",
+        "description": "Set LOG_LEVEL=DEBUG while investigating a billing bug",
+        "timestamp": "2026-03-29T10:05:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "disk_used_pct": 100.0,
+      "pod_evictions": 5.72,
+      "log_bytes_per_sec": 2733017.71
+    },
+    "deployment_id": null,
+    "tags": [
+      "disk",
+      "kubernetes",
+      "logging",
+      "eviction",
+      "billing-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "Debug logging was left enabled after an investigation. The service wrote full request payloads to local log files, filled the node's ephemeral storage and triggered kubelet evictions.",
+    "root_cause_category": "disk_pressure",
+    "expected_remediation": "Set LOG_LEVEL back to INFO, clear the oversized log files, set ephemeral-storage requests and limits, and log to stdout with rotation.",
+    "incident_id": "INC-1028",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "disk-pressure"
+    ]
+  },
+  {
+    "title": "search-api pods evicted due to disk pressure",
+    "description": "Nodes running search-api report DiskPressure and the kubelet is evicting pods. Writes fail with no space left on device.",
+    "service": "search-api",
+    "environment": "staging",
+    "severity": "sev3",
+    "timestamp": "2026-03-30T18:18:00Z",
+    "symptoms": [
+      "node condition DiskPressure=True",
+      "pods evicted for ephemeral-storage",
+      "write failures with ENOSPC"
+    ],
+    "error_messages": [
+      "write /var/log/app/search-api.log: no space left on device",
+      "The node was low on resource: ephemeral-storage"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1029",
+        "change_type": "config",
+        "description": "Set LOG_LEVEL=DEBUG while investigating a billing bug",
+        "timestamp": "2026-03-30T15:18:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "disk_used_pct": 91.98,
+      "pod_evictions": 4.67,
+      "log_bytes_per_sec": 2254817.36
+    },
+    "deployment_id": null,
+    "tags": [
+      "disk",
+      "kubernetes",
+      "logging",
+      "eviction",
+      "search-api",
+      "staging"
+    ],
+    "ground_truth_root_cause": "Debug logging was left enabled after an investigation. The service wrote full request payloads to local log files, filled the node's ephemeral storage and triggered kubelet evictions.",
+    "root_cause_category": "disk_pressure",
+    "expected_remediation": "Set LOG_LEVEL back to INFO, clear the oversized log files, set ephemeral-storage requests and limits, and log to stdout with rotation.",
+    "incident_id": "INC-1029",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "disk-pressure"
+    ]
+  },
+  {
+    "title": "shipping-service requests timing out on downstream dependency",
+    "description": "shipping-service requests are slow and timing out. Threads are blocked waiting on the third party shipping rates provider.",
+    "service": "shipping-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-03-31T20:56:00Z",
+    "symptoms": [
+      "p99 latency above 10 seconds",
+      "request threads blocked on outbound HTTP calls",
+      "circuit breaker opening and closing repeatedly"
+    ],
+    "error_messages": [
+      "Timeout calling shipping-rates-provider after 10000ms",
+      "CircuitBreaker 'shipping-rates' is OPEN and does not permit further calls"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "error_rate_pct": 13.57,
+      "p99_latency_ms": 11631.59,
+      "dependency_p99_ms": 13461.46
+    },
+    "deployment_id": null,
+    "tags": [
+      "dependency",
+      "timeout",
+      "circuit-breaker",
+      "latency",
+      "shipping-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The third party shipping rates provider degraded to over 10 seconds p99. The service had no tight timeout or fallback, so request threads blocked on the provider and latency cascaded to callers.",
+    "root_cause_category": "dependency_timeout",
+    "expected_remediation": "Cut the provider timeout to 2 seconds, serve cached rates as a fallback, tune the circuit breaker, and open a ticket with the provider.",
+    "incident_id": "INC-1030",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "dependency-timeout",
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "checkout-api requests timing out on downstream dependency",
+    "description": "checkout-api requests are slow and timing out. Threads are blocked waiting on the third party shipping rates provider.",
+    "service": "checkout-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-01T12:36:00Z",
+    "symptoms": [
+      "p99 latency above 10 seconds",
+      "request threads blocked on outbound HTTP calls",
+      "circuit breaker opening and closing repeatedly"
+    ],
+    "error_messages": [
+      "Timeout calling shipping-rates-provider after 10000ms",
+      "CircuitBreaker 'shipping-rates' is OPEN and does not permit further calls"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "error_rate_pct": 13.23,
+      "p99_latency_ms": 11773.1,
+      "dependency_p99_ms": 12921.05
+    },
+    "deployment_id": null,
+    "tags": [
+      "dependency",
+      "timeout",
+      "circuit-breaker",
+      "latency",
+      "checkout-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "The third party shipping rates provider degraded to over 10 seconds p99. The service had no tight timeout or fallback, so request threads blocked on the provider and latency cascaded to callers.",
+    "root_cause_category": "dependency_timeout",
+    "expected_remediation": "Cut the provider timeout to 2 seconds, serve cached rates as a fallback, tune the circuit breaker, and open a ticket with the provider.",
+    "incident_id": "INC-1031",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "dependency-timeout",
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "orders-service requests timing out on downstream dependency",
+    "description": "orders-service requests are slow and timing out. Threads are blocked waiting on the third party shipping rates provider.",
+    "service": "orders-service",
+    "environment": "staging",
+    "severity": "sev3",
+    "timestamp": "2026-04-02T07:45:00Z",
+    "symptoms": [
+      "p99 latency above 10 seconds",
+      "request threads blocked on outbound HTTP calls",
+      "circuit breaker opening and closing repeatedly"
+    ],
+    "error_messages": [
+      "Timeout calling shipping-rates-provider after 10000ms",
+      "CircuitBreaker 'shipping-rates' is OPEN and does not permit further calls"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "error_rate_pct": 12.85,
+      "p99_latency_ms": 11050.13,
+      "dependency_p99_ms": 12758.47
+    },
+    "deployment_id": null,
+    "tags": [
+      "dependency",
+      "timeout",
+      "circuit-breaker",
+      "latency",
+      "orders-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "The third party shipping rates provider degraded to over 10 seconds p99. The service had no tight timeout or fallback, so request threads blocked on the provider and latency cascaded to callers.",
+    "root_cause_category": "dependency_timeout",
+    "expected_remediation": "Cut the provider timeout to 2 seconds, serve cached rates as a fallback, tune the circuit breaker, and open a ticket with the provider.",
+    "incident_id": "INC-1032",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "dependency-timeout",
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "Latency spike on search-api listing endpoints",
+    "description": "Listing endpoints on search-api slowed from about 100ms to several seconds after a feature release. Database CPU is high.",
+    "service": "search-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-03T03:02:00Z",
+    "symptoms": [
+      "listing endpoint p99 above 3 seconds",
+      "database CPU above 90%",
+      "slow query log full of sequential scans"
+    ],
+    "error_messages": [
+      "slow query: Seq Scan on products (rows=41234001) took 3120ms"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00088",
+        "change_type": "deployment",
+        "description": "v2.17.0: Add region filter to product listing API",
+        "timestamp": "2026-04-03T02:32:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 2960.16,
+      "db_cpu_pct": 82.59
+    },
+    "deployment_id": "dep-00088",
+    "tags": [
+      "latency",
+      "database",
+      "index",
+      "query-plan",
+      "search-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "The new region filter queries products.region, which has no index, so every listing request runs a sequential scan over a 40M row table.",
+    "root_cause_category": "slow_query_latency",
+    "expected_remediation": "Create an index on products.region with CREATE INDEX CONCURRENTLY, or disable the region filter until the index exists. Add EXPLAIN checks to query reviews.",
+    "incident_id": "INC-1033",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "Latency spike on inventory-service listing endpoints",
+    "description": "Listing endpoints on inventory-service slowed from about 100ms to several seconds after a feature release. Database CPU is high.",
+    "service": "inventory-service",
+    "environment": "production",
+    "severity": "sev3",
+    "timestamp": "2026-04-04T08:49:00Z",
+    "symptoms": [
+      "listing endpoint p99 above 3 seconds",
+      "database CPU above 90%",
+      "slow query log full of sequential scans"
+    ],
+    "error_messages": [
+      "slow query: Seq Scan on products (rows=41234001) took 3120ms"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00098",
+        "change_type": "deployment",
+        "description": "v2.17.0: Add region filter to product listing API",
+        "timestamp": "2026-04-04T08:19:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 3098.9,
+      "db_cpu_pct": 89.98
+    },
+    "deployment_id": "dep-00098",
+    "tags": [
+      "latency",
+      "database",
+      "index",
+      "query-plan",
+      "inventory-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "The new region filter queries products.region, which has no index, so every listing request runs a sequential scan over a 40M row table.",
+    "root_cause_category": "slow_query_latency",
+    "expected_remediation": "Create an index on products.region with CREATE INDEX CONCURRENTLY, or disable the region filter until the index exists. Add EXPLAIN checks to query reviews.",
+    "incident_id": "INC-1034",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "Latency spike on user-profile-service listing endpoints",
+    "description": "Listing endpoints on user-profile-service slowed from about 100ms to several seconds after a feature release. Database CPU is high.",
+    "service": "user-profile-service",
+    "environment": "staging",
+    "severity": "sev3",
+    "timestamp": "2026-04-05T10:05:00Z",
+    "symptoms": [
+      "listing endpoint p99 above 3 seconds",
+      "database CPU above 90%",
+      "slow query log full of sequential scans"
+    ],
+    "error_messages": [
+      "slow query: Seq Scan on products (rows=41234001) took 3120ms"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00099",
+        "change_type": "deployment",
+        "description": "v2.21.0: Add region filter to product listing API",
+        "timestamp": "2026-04-05T09:35:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 3674.37,
+      "db_cpu_pct": 100.0
+    },
+    "deployment_id": "dep-00099",
+    "tags": [
+      "latency",
+      "database",
+      "index",
+      "query-plan",
+      "user-profile-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "The new region filter queries products.region, which has no index, so every listing request runs a sequential scan over a 40M row table.",
+    "root_cause_category": "slow_query_latency",
+    "expected_remediation": "Create an index on products.region with CREATE INDEX CONCURRENTLY, or disable the region filter until the index exists. Add EXPLAIN checks to query reviews.",
+    "incident_id": "INC-1035",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "billing-service errors after failed schema migration",
+    "description": "billing-service is failing requests with missing column errors. The schema migration in the latest release did not complete but the application was rolled out.",
+    "service": "billing-service",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-04-06T08:55:00Z",
+    "symptoms": [
+      "SQL errors referencing a missing column",
+      "migration job exited with a lock timeout",
+      "new application version running on all pods"
+    ],
+    "error_messages": [
+      "ERROR: column \"discount_code\" does not exist",
+      "migration 0042_add_discount_code failed: canceling statement due to lock timeout"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00100",
+        "change_type": "deployment",
+        "description": "v2.18.0: Add discount codes to invoices (migration 0042)",
+        "timestamp": "2026-04-06T08:40:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 20.15
+    },
+    "deployment_id": "dep-00100",
+    "tags": [
+      "database",
+      "migration",
+      "deployment",
+      "schema",
+      "billing-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "Schema migration 0042 failed on a lock timeout, but the deploy pipeline did not gate on migration success. The new version expects the discount_code column, which does not exist.",
+    "root_cause_category": "failed_db_migration",
+    "expected_remediation": "Roll back the application to the previous version, rerun migration 0042 with a lock_timeout during low traffic, and make the pipeline block rollout when a migration fails.",
+    "incident_id": "INC-1036",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "database-migration-failure",
+      "deployment-rollback"
+    ]
+  },
+  {
+    "title": "orders-service errors after failed schema migration",
+    "description": "orders-service is failing requests with missing column errors. The schema migration in the latest release did not complete but the application was rolled out.",
+    "service": "orders-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-07T04:24:00Z",
+    "symptoms": [
+      "SQL errors referencing a missing column",
+      "migration job exited with a lock timeout",
+      "new application version running on all pods"
+    ],
+    "error_messages": [
+      "ERROR: column \"discount_code\" does not exist",
+      "migration 0042_add_discount_code failed: canceling statement due to lock timeout"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00101",
+        "change_type": "deployment",
+        "description": "v2.19.0: Add discount codes to invoices (migration 0042)",
+        "timestamp": "2026-04-07T04:09:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 21.7
+    },
+    "deployment_id": "dep-00101",
+    "tags": [
+      "database",
+      "migration",
+      "deployment",
+      "schema",
+      "orders-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "Schema migration 0042 failed on a lock timeout, but the deploy pipeline did not gate on migration success. The new version expects the discount_code column, which does not exist.",
+    "root_cause_category": "failed_db_migration",
+    "expected_remediation": "Roll back the application to the previous version, rerun migration 0042 with a lock_timeout during low traffic, and make the pipeline block rollout when a migration fails.",
+    "incident_id": "INC-1037",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "database-migration-failure",
+      "deployment-rollback"
+    ]
+  },
+  {
+    "title": "user-profile-service errors after failed schema migration",
+    "description": "user-profile-service is failing requests with missing column errors. The schema migration in the latest release did not complete but the application was rolled out.",
+    "service": "user-profile-service",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-04-08T09:29:00Z",
+    "symptoms": [
+      "SQL errors referencing a missing column",
+      "migration job exited with a lock timeout",
+      "new application version running on all pods"
+    ],
+    "error_messages": [
+      "ERROR: column \"discount_code\" does not exist",
+      "migration 0042_add_discount_code failed: canceling statement due to lock timeout"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00111",
+        "change_type": "deployment",
+        "description": "v2.22.0: Add discount codes to invoices (migration 0042)",
+        "timestamp": "2026-04-08T09:14:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 23.15
+    },
+    "deployment_id": "dep-00111",
+    "tags": [
+      "database",
+      "migration",
+      "deployment",
+      "schema",
+      "user-profile-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "Schema migration 0042 failed on a lock timeout, but the deploy pipeline did not gate on migration success. The new version expects the discount_code column, which does not exist.",
+    "root_cause_category": "failed_db_migration",
+    "expected_remediation": "Roll back the application to the previous version, rerun migration 0042 with a lock_timeout during low traffic, and make the pipeline block rollout when a migration fails.",
+    "incident_id": "INC-1038",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "database-migration-failure",
+      "deployment-rollback"
+    ]
+  },
+  {
+    "title": "checkout-api failures after feature flag change",
+    "description": "checkout-api started failing requests for non-USD customers after a feature flag was ramped to 100%.",
+    "service": "checkout-api",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-04-09T12:10:00Z",
+    "symptoms": [
+      "errors only for non-USD currencies",
+      "failures started when a flag was changed",
+      "no deployment in the window"
+    ],
+    "error_messages": [
+      "PricingEngineV2: KeyError 'currency_rounding' for currency EUR"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1039",
+        "change_type": "feature_flag",
+        "description": "Ramped feature flag new-pricing-engine from 5% to 100%",
+        "timestamp": "2026-04-09T12:00:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 19.03
+    },
+    "deployment_id": null,
+    "tags": [
+      "feature-flag",
+      "5xx",
+      "config",
+      "checkout-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "Ramping new-pricing-engine to 100% exposed a code path that has no rounding configuration for non-USD currencies, so those requests fail.",
+    "root_cause_category": "broken_feature_flag",
+    "expected_remediation": "Turn the new-pricing-engine flag off, add the missing currency rounding configuration, and ramp again gradually with error rate guards.",
+    "incident_id": "INC-1039",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "feature-flag-rollback",
+      "api-5xx-spike"
+    ]
+  },
+  {
+    "title": "search-api failures after feature flag change",
+    "description": "search-api started failing requests for non-USD customers after a feature flag was ramped to 100%.",
+    "service": "search-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-10T12:22:00Z",
+    "symptoms": [
+      "errors only for non-USD currencies",
+      "failures started when a flag was changed",
+      "no deployment in the window"
+    ],
+    "error_messages": [
+      "PricingEngineV2: KeyError 'currency_rounding' for currency EUR"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1040",
+        "change_type": "feature_flag",
+        "description": "Ramped feature flag new-pricing-engine from 5% to 100%",
+        "timestamp": "2026-04-10T12:12:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 16.92
+    },
+    "deployment_id": null,
+    "tags": [
+      "feature-flag",
+      "5xx",
+      "config",
+      "search-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "Ramping new-pricing-engine to 100% exposed a code path that has no rounding configuration for non-USD currencies, so those requests fail.",
+    "root_cause_category": "broken_feature_flag",
+    "expected_remediation": "Turn the new-pricing-engine flag off, add the missing currency rounding configuration, and ramp again gradually with error rate guards.",
+    "incident_id": "INC-1040",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "feature-flag-rollback",
+      "api-5xx-spike"
+    ]
+  },
+  {
+    "title": "payments-service failures after feature flag change",
+    "description": "payments-service started failing requests for non-USD customers after a feature flag was ramped to 100%.",
+    "service": "payments-service",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-04-11T07:42:00Z",
+    "symptoms": [
+      "errors only for non-USD currencies",
+      "failures started when a flag was changed",
+      "no deployment in the window"
+    ],
+    "error_messages": [
+      "PricingEngineV2: KeyError 'currency_rounding' for currency EUR"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1041",
+        "change_type": "feature_flag",
+        "description": "Ramped feature flag new-pricing-engine from 5% to 100%",
+        "timestamp": "2026-04-11T07:32:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 18.78
+    },
+    "deployment_id": null,
+    "tags": [
+      "feature-flag",
+      "5xx",
+      "config",
+      "payments-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "Ramping new-pricing-engine to 100% exposed a code path that has no rounding configuration for non-USD currencies, so those requests fail.",
+    "root_cause_category": "broken_feature_flag",
+    "expected_remediation": "Turn the new-pricing-engine flag off, add the missing currency rounding configuration, and ramp again gradually with error rate guards.",
+    "incident_id": "INC-1041",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "feature-flag-rollback",
+      "api-5xx-spike"
+    ]
+  },
+  {
+    "title": "api-gateway returning 502 from load balancer",
+    "description": "The load balancer in front of api-gateway is returning 502 and 503. Pods are running and healthy from inside the cluster.",
+    "service": "api-gateway",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-04-12T09:44:00Z",
+    "symptoms": [
+      "load balancer 502 and 503 responses",
+      "target group reports no healthy targets",
+      "pods healthy when checked directly"
+    ],
+    "error_messages": [
+      "502 Bad Gateway",
+      "Target group api-gateway-tg has no healthy targets"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1042",
+        "change_type": "infrastructure",
+        "description": "Terraform change updated target group health check path to /healthz",
+        "timestamp": "2026-04-12T09:36:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 39.28,
+      "healthy_targets": 2.41
+    },
+    "deployment_id": null,
+    "tags": [
+      "load-balancer",
+      "health-check",
+      "terraform",
+      "networking",
+      "api-gateway",
+      "production"
+    ],
+    "ground_truth_root_cause": "A Terraform change set the target group health check path to /healthz, but the service serves /health. Every target fails its health check and the load balancer has nothing to route to.",
+    "root_cause_category": "load_balancer_misconfiguration",
+    "expected_remediation": "Revert the health check path to /health through Terraform and add a plan check that validates health check paths against the service.",
+    "incident_id": "INC-1042",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "load-balancer-misconfiguration"
+    ]
+  },
+  {
+    "title": "checkout-api returning 502 from load balancer",
+    "description": "The load balancer in front of checkout-api is returning 502 and 503. Pods are running and healthy from inside the cluster.",
+    "service": "checkout-api",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-04-13T03:38:00Z",
+    "symptoms": [
+      "load balancer 502 and 503 responses",
+      "target group reports no healthy targets",
+      "pods healthy when checked directly"
+    ],
+    "error_messages": [
+      "502 Bad Gateway",
+      "Target group checkout-api-tg has no healthy targets"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1043",
+        "change_type": "infrastructure",
+        "description": "Terraform change updated target group health check path to /healthz",
+        "timestamp": "2026-04-13T03:30:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 34.75,
+      "healthy_targets": 2.38
+    },
+    "deployment_id": null,
+    "tags": [
+      "load-balancer",
+      "health-check",
+      "terraform",
+      "networking",
+      "checkout-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "A Terraform change set the target group health check path to /healthz, but the service serves /health. Every target fails its health check and the load balancer has nothing to route to.",
+    "root_cause_category": "load_balancer_misconfiguration",
+    "expected_remediation": "Revert the health check path to /health through Terraform and add a plan check that validates health check paths against the service.",
+    "incident_id": "INC-1043",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "load-balancer-misconfiguration"
+    ]
+  },
+  {
+    "title": "search-api returning 502 from load balancer",
+    "description": "The load balancer in front of search-api is returning 502 and 503. Pods are running and healthy from inside the cluster.",
+    "service": "search-api",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-04-14T06:34:00Z",
+    "symptoms": [
+      "load balancer 502 and 503 responses",
+      "target group reports no healthy targets",
+      "pods healthy when checked directly"
+    ],
+    "error_messages": [
+      "502 Bad Gateway",
+      "Target group search-api-tg has no healthy targets"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1044",
+        "change_type": "infrastructure",
+        "description": "Terraform change updated target group health check path to /healthz",
+        "timestamp": "2026-04-14T06:26:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 41.38,
+      "healthy_targets": 2.33
+    },
+    "deployment_id": null,
+    "tags": [
+      "load-balancer",
+      "health-check",
+      "terraform",
+      "networking",
+      "search-api",
+      "staging"
+    ],
+    "ground_truth_root_cause": "A Terraform change set the target group health check path to /healthz, but the service serves /health. Every target fails its health check and the load balancer has nothing to route to.",
+    "root_cause_category": "load_balancer_misconfiguration",
+    "expected_remediation": "Revert the health check path to /health through Terraform and add a plan check that validates health check paths against the service.",
+    "incident_id": "INC-1044",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "load-balancer-misconfiguration"
+    ]
+  },
+  {
+    "title": "payments-service cannot authenticate to database after credential rotation",
+    "description": "New database connections from payments-service fail with password authentication errors. Existing connections still work.",
+    "service": "payments-service",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-04-15T08:10:00Z",
+    "symptoms": [
+      "new database connections failing authentication",
+      "errors started right after a scheduled credential rotation",
+      "existing pooled connections keep working"
+    ],
+    "error_messages": [
+      "FATAL: password authentication failed for user \"payments-service_app\""
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1045",
+        "change_type": "secret_rotation",
+        "description": "Automated rotation of database credentials in Secrets Manager",
+        "timestamp": "2026-04-15T07:50:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 16.53,
+      "db_auth_failures_per_min": 464.55
+    },
+    "deployment_id": null,
+    "tags": [
+      "secrets",
+      "rotation",
+      "database",
+      "credentials",
+      "payments-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "Secrets Manager rotated the database password, but payments-service reads credentials only at startup. New connections still use the old password and fail.",
+    "root_cause_category": "secret_rotation_failure",
+    "expected_remediation": "Do a rolling restart of payments-service so it loads the new secret, then add secret reloading or a dual-credential rotation strategy.",
+    "incident_id": "INC-1045",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "secret-rotation-failure"
+    ]
+  },
+  {
+    "title": "billing-service cannot authenticate to database after credential rotation",
+    "description": "New database connections from billing-service fail with password authentication errors. Existing connections still work.",
+    "service": "billing-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-16T15:24:00Z",
+    "symptoms": [
+      "new database connections failing authentication",
+      "errors started right after a scheduled credential rotation",
+      "existing pooled connections keep working"
+    ],
+    "error_messages": [
+      "FATAL: password authentication failed for user \"billing-service_app\""
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1046",
+        "change_type": "secret_rotation",
+        "description": "Automated rotation of database credentials in Secrets Manager",
+        "timestamp": "2026-04-16T15:04:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 17.0,
+      "db_auth_failures_per_min": 468.57
+    },
+    "deployment_id": null,
+    "tags": [
+      "secrets",
+      "rotation",
+      "database",
+      "credentials",
+      "billing-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "Secrets Manager rotated the database password, but billing-service reads credentials only at startup. New connections still use the old password and fail.",
+    "root_cause_category": "secret_rotation_failure",
+    "expected_remediation": "Do a rolling restart of billing-service so it loads the new secret, then add secret reloading or a dual-credential rotation strategy.",
+    "incident_id": "INC-1046",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "secret-rotation-failure"
+    ]
+  },
+  {
+    "title": "notification-worker cannot authenticate to database after credential rotation",
+    "description": "New database connections from notification-worker fail with password authentication errors. Existing connections still work.",
+    "service": "notification-worker",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-04-17T09:59:00Z",
+    "symptoms": [
+      "new database connections failing authentication",
+      "errors started right after a scheduled credential rotation",
+      "existing pooled connections keep working"
+    ],
+    "error_messages": [
+      "FATAL: password authentication failed for user \"notification-worker_app\""
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1047",
+        "change_type": "secret_rotation",
+        "description": "Automated rotation of database credentials in Secrets Manager",
+        "timestamp": "2026-04-17T09:39:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 15.64,
+      "db_auth_failures_per_min": 428.49
+    },
+    "deployment_id": null,
+    "tags": [
+      "secrets",
+      "rotation",
+      "database",
+      "credentials",
+      "notification-worker",
+      "staging"
+    ],
+    "ground_truth_root_cause": "Secrets Manager rotated the database password, but notification-worker reads credentials only at startup. New connections still use the old password and fail.",
+    "root_cause_category": "secret_rotation_failure",
+    "expected_remediation": "Do a rolling restart of notification-worker so it loads the new secret, then add secret reloading or a dual-credential rotation strategy.",
+    "incident_id": "INC-1047",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "secret-rotation-failure"
+    ]
+  },
+  {
+    "title": "notification-worker getting AccessDenied from AWS",
+    "description": "notification-worker is failing to write to S3 with AccessDenied after an IAM change was applied.",
+    "service": "notification-worker",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-18T18:14:00Z",
+    "symptoms": [
+      "AccessDenied on s3:PutObject",
+      "failures started after an IAM Terraform apply",
+      "reads still succeed"
+    ],
+    "error_messages": [
+      "AccessDenied: assumed-role/notification-worker-role is not authorized to perform: s3:PutObject"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1048",
+        "change_type": "infrastructure",
+        "description": "Terraform refactor consolidated IAM policies for data services",
+        "timestamp": "2026-04-18T17:39:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 40.49,
+      "s3_put_errors_per_min": 269.2
+    },
+    "deployment_id": null,
+    "tags": [
+      "iam",
+      "aws",
+      "permissions",
+      "s3",
+      "notification-worker",
+      "production"
+    ],
+    "ground_truth_root_cause": "An IAM Terraform refactor dropped the s3:PutObject statement from the notification-worker role, so every upload is denied.",
+    "root_cause_category": "iam_permission_regression",
+    "expected_remediation": "Restore the s3:PutObject statement on the role, reapply Terraform, and add policy tests or IAM Access Analyzer checks to the pipeline.",
+    "incident_id": "INC-1048",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "iam-permission-issue"
+    ]
+  },
+  {
+    "title": "analytics-consumer getting AccessDenied from AWS",
+    "description": "analytics-consumer is failing to write to S3 with AccessDenied after an IAM change was applied.",
+    "service": "analytics-consumer",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-19T11:53:00Z",
+    "symptoms": [
+      "AccessDenied on s3:PutObject",
+      "failures started after an IAM Terraform apply",
+      "reads still succeed"
+    ],
+    "error_messages": [
+      "AccessDenied: assumed-role/analytics-consumer-role is not authorized to perform: s3:PutObject"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1049",
+        "change_type": "infrastructure",
+        "description": "Terraform refactor consolidated IAM policies for data services",
+        "timestamp": "2026-04-19T11:18:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 32.17,
+      "s3_put_errors_per_min": 230.53
+    },
+    "deployment_id": null,
+    "tags": [
+      "iam",
+      "aws",
+      "permissions",
+      "s3",
+      "analytics-consumer",
+      "production"
+    ],
+    "ground_truth_root_cause": "An IAM Terraform refactor dropped the s3:PutObject statement from the analytics-consumer role, so every upload is denied.",
+    "root_cause_category": "iam_permission_regression",
+    "expected_remediation": "Restore the s3:PutObject statement on the role, reapply Terraform, and add policy tests or IAM Access Analyzer checks to the pipeline.",
+    "incident_id": "INC-1049",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "iam-permission-issue"
+    ]
+  },
+  {
+    "title": "billing-service getting AccessDenied from AWS",
+    "description": "billing-service is failing to write to S3 with AccessDenied after an IAM change was applied.",
+    "service": "billing-service",
+    "environment": "staging",
+    "severity": "sev3",
+    "timestamp": "2026-04-20T02:14:00Z",
+    "symptoms": [
+      "AccessDenied on s3:PutObject",
+      "failures started after an IAM Terraform apply",
+      "reads still succeed"
+    ],
+    "error_messages": [
+      "AccessDenied: assumed-role/billing-service-role is not authorized to perform: s3:PutObject"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1050",
+        "change_type": "infrastructure",
+        "description": "Terraform refactor consolidated IAM policies for data services",
+        "timestamp": "2026-04-20T01:39:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 34.97,
+      "s3_put_errors_per_min": 233.43
+    },
+    "deployment_id": null,
+    "tags": [
+      "iam",
+      "aws",
+      "permissions",
+      "s3",
+      "billing-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "An IAM Terraform refactor dropped the s3:PutObject statement from the billing-service role, so every upload is denied.",
+    "root_cause_category": "iam_permission_regression",
+    "expected_remediation": "Restore the s3:PutObject statement on the role, reapply Terraform, and add policy tests or IAM Access Analyzer checks to the pipeline.",
+    "incident_id": "INC-1050",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "iam-permission-issue"
+    ]
+  },
+  {
+    "title": "Queue backlog growing for notification-worker",
+    "description": "The SQS queue consumed by notification-worker has grown past 150k messages. Workers are running but throughput is near zero.",
+    "service": "notification-worker",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-21T02:51:00Z",
+    "symptoms": [
+      "queue depth above 150k and climbing",
+      "the same message id failing repeatedly",
+      "worker throughput near zero"
+    ],
+    "error_messages": [
+      "Failed to process message: JSONDecodeError: Expecting value: line 1 column 1"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "queue_depth": 173952.68,
+      "messages_processed_per_sec": 9.76
+    },
+    "deployment_id": null,
+    "tags": [
+      "queue",
+      "sqs",
+      "backlog",
+      "poison-message",
+      "notification-worker",
+      "production"
+    ],
+    "ground_truth_root_cause": "A malformed poison message fails processing and is redelivered forever. The queue has no dead letter queue, so it blocks the workers and the backlog grows.",
+    "root_cause_category": "queue_backlog",
+    "expected_remediation": "Move the poison message aside, configure a dead letter queue with maxReceiveCount of 5, and make the worker skip unparseable payloads.",
+    "incident_id": "INC-1051",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "queue-backlog"
+    ]
+  },
+  {
+    "title": "Queue backlog growing for shipping-service",
+    "description": "The SQS queue consumed by shipping-service has grown past 150k messages. Workers are running but throughput is near zero.",
+    "service": "shipping-service",
+    "environment": "production",
+    "severity": "sev3",
+    "timestamp": "2026-04-22T11:25:00Z",
+    "symptoms": [
+      "queue depth above 150k and climbing",
+      "the same message id failing repeatedly",
+      "worker throughput near zero"
+    ],
+    "error_messages": [
+      "Failed to process message: JSONDecodeError: Expecting value: line 1 column 1"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "queue_depth": 161320.98,
+      "messages_processed_per_sec": 17.92
+    },
+    "deployment_id": null,
+    "tags": [
+      "queue",
+      "sqs",
+      "backlog",
+      "poison-message",
+      "shipping-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "A malformed poison message fails processing and is redelivered forever. The queue has no dead letter queue, so it blocks the workers and the backlog grows.",
+    "root_cause_category": "queue_backlog",
+    "expected_remediation": "Move the poison message aside, configure a dead letter queue with maxReceiveCount of 5, and make the worker skip unparseable payloads.",
+    "incident_id": "INC-1052",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "queue-backlog"
+    ]
+  },
+  {
+    "title": "Queue backlog growing for billing-service",
+    "description": "The SQS queue consumed by billing-service has grown past 150k messages. Workers are running but throughput is near zero.",
+    "service": "billing-service",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-04-23T09:04:00Z",
+    "symptoms": [
+      "queue depth above 150k and climbing",
+      "the same message id failing repeatedly",
+      "worker throughput near zero"
+    ],
+    "error_messages": [
+      "Failed to process message: JSONDecodeError: Expecting value: line 1 column 1"
+    ],
+    "recent_changes": [],
+    "metrics_summary": {
+      "queue_depth": 156435.11,
+      "messages_processed_per_sec": 18.54
+    },
+    "deployment_id": null,
+    "tags": [
+      "queue",
+      "sqs",
+      "backlog",
+      "poison-message",
+      "billing-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "A malformed poison message fails processing and is redelivered forever. The queue has no dead letter queue, so it blocks the workers and the backlog grows.",
+    "root_cause_category": "queue_backlog",
+    "expected_remediation": "Move the poison message aside, configure a dead letter queue with maxReceiveCount of 5, and make the worker skip unparseable payloads.",
+    "incident_id": "INC-1053",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "queue-backlog"
+    ]
+  },
+  {
+    "title": "inventory-service in CrashLoopBackOff after config change",
+    "description": "All new inventory-service pods exit within seconds of starting and are in CrashLoopBackOff. Old pods are still serving.",
+    "service": "inventory-service",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-24T07:58:00Z",
+    "symptoms": [
+      "pods in CrashLoopBackOff",
+      "container exits with code 1 within 3 seconds",
+      "only pods started after a config change are affected"
+    ],
+    "error_messages": [
+      "panic: missing required environment variable DATABASE_URL",
+      "Back-off restarting failed container"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1054",
+        "change_type": "config",
+        "description": "ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL",
+        "timestamp": "2026-04-24T07:48:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "pod_restarts": 22.37,
+      "available_replicas": 1.4
+    },
+    "deployment_id": null,
+    "tags": [
+      "kubernetes",
+      "crashloop",
+      "config",
+      "configmap",
+      "inventory-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "A ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL. The service requires DATABASE_URL, so new containers panic on startup and crash loop.",
+    "root_cause_category": "container_crash_loop",
+    "expected_remediation": "Restore the DATABASE_URL key in the ConfigMap and restart the rollout, then validate required keys in CI.",
+    "incident_id": "INC-1054",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "container-crash-loop"
+    ]
+  },
+  {
+    "title": "auth-service in CrashLoopBackOff after config change",
+    "description": "All new auth-service pods exit within seconds of starting and are in CrashLoopBackOff. Old pods are still serving.",
+    "service": "auth-service",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-04-25T19:56:00Z",
+    "symptoms": [
+      "pods in CrashLoopBackOff",
+      "container exits with code 1 within 3 seconds",
+      "only pods started after a config change are affected"
+    ],
+    "error_messages": [
+      "panic: missing required environment variable DATABASE_URL",
+      "Back-off restarting failed container"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1055",
+        "change_type": "config",
+        "description": "ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL",
+        "timestamp": "2026-04-25T19:46:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "pod_restarts": 20.51,
+      "available_replicas": 1.37
+    },
+    "deployment_id": null,
+    "tags": [
+      "kubernetes",
+      "crashloop",
+      "config",
+      "configmap",
+      "auth-service",
+      "production"
+    ],
+    "ground_truth_root_cause": "A ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL. The service requires DATABASE_URL, so new containers panic on startup and crash loop.",
+    "root_cause_category": "container_crash_loop",
+    "expected_remediation": "Restore the DATABASE_URL key in the ConfigMap and restart the rollout, then validate required keys in CI.",
+    "incident_id": "INC-1055",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "container-crash-loop"
+    ]
+  },
+  {
+    "title": "shipping-service in CrashLoopBackOff after config change",
+    "description": "All new shipping-service pods exit within seconds of starting and are in CrashLoopBackOff. Old pods are still serving.",
+    "service": "shipping-service",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-04-26T11:13:00Z",
+    "symptoms": [
+      "pods in CrashLoopBackOff",
+      "container exits with code 1 within 3 seconds",
+      "only pods started after a config change are affected"
+    ],
+    "error_messages": [
+      "panic: missing required environment variable DATABASE_URL",
+      "Back-off restarting failed container"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1056",
+        "change_type": "config",
+        "description": "ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL",
+        "timestamp": "2026-04-26T11:03:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "pod_restarts": 18.01,
+      "available_replicas": 1.42
+    },
+    "deployment_id": null,
+    "tags": [
+      "kubernetes",
+      "crashloop",
+      "config",
+      "configmap",
+      "shipping-service",
+      "staging"
+    ],
+    "ground_truth_root_cause": "A ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL. The service requires DATABASE_URL, so new containers panic on startup and crash loop.",
+    "root_cause_category": "container_crash_loop",
+    "expected_remediation": "Restore the DATABASE_URL key in the ConfigMap and restart the rollout, then validate required keys in CI.",
+    "incident_id": "INC-1056",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "container-crash-loop"
+    ]
+  },
+  {
+    "title": "checkout-api saturated during peak traffic, HPA not scaling",
+    "description": "During the daily traffic peak checkout-api CPU is saturated and latency is high. The HorizontalPodAutoscaler is pinned at its maximum replica count.",
+    "service": "checkout-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-27T16:25:00Z",
+    "symptoms": [
+      "CPU above 95% on every pod",
+      "HPA at maxReplicas",
+      "latency rising with traffic"
+    ],
+    "error_messages": [
+      "HPA checkout-api: desired replicas 14 exceeds maxReplicas 4"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1057",
+        "change_type": "config",
+        "description": "HPA maxReplicas lowered from 20 to 4",
+        "timestamp": "2026-04-27T12:25:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 2223.73,
+      "cpu_pct": 88.22,
+      "requests_per_sec": 1238.44,
+      "replica_count": 3.92
+    },
+    "deployment_id": null,
+    "tags": [
+      "autoscaling",
+      "hpa",
+      "kubernetes",
+      "capacity",
+      "checkout-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "HPA maxReplicas was lowered from 20 to 4, so checkout-api could not scale out for peak traffic. Pods saturate on CPU and latency climbs.",
+    "root_cause_category": "autoscaling_misconfiguration",
+    "expected_remediation": "Restore maxReplicas to 20, and alert when an HPA sits at maxReplicas for more than 10 minutes.",
+    "incident_id": "INC-1057",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "autoscaling-misconfiguration",
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "search-api saturated during peak traffic, HPA not scaling",
+    "description": "During the daily traffic peak search-api CPU is saturated and latency is high. The HorizontalPodAutoscaler is pinned at its maximum replica count.",
+    "service": "search-api",
+    "environment": "production",
+    "severity": "sev2",
+    "timestamp": "2026-04-28T15:09:00Z",
+    "symptoms": [
+      "CPU above 95% on every pod",
+      "HPA at maxReplicas",
+      "latency rising with traffic"
+    ],
+    "error_messages": [
+      "HPA search-api: desired replicas 14 exceeds maxReplicas 4"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1058",
+        "change_type": "config",
+        "description": "HPA maxReplicas lowered from 20 to 4",
+        "timestamp": "2026-04-28T11:09:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 2903.58,
+      "cpu_pct": 100.0,
+      "requests_per_sec": 1472.48,
+      "replica_count": 4.0
+    },
+    "deployment_id": null,
+    "tags": [
+      "autoscaling",
+      "hpa",
+      "kubernetes",
+      "capacity",
+      "search-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "HPA maxReplicas was lowered from 20 to 4, so search-api could not scale out for peak traffic. Pods saturate on CPU and latency climbs.",
+    "root_cause_category": "autoscaling_misconfiguration",
+    "expected_remediation": "Restore maxReplicas to 20, and alert when an HPA sits at maxReplicas for more than 10 minutes.",
+    "incident_id": "INC-1058",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "autoscaling-misconfiguration",
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "api-gateway saturated during peak traffic, HPA not scaling",
+    "description": "During the daily traffic peak api-gateway CPU is saturated and latency is high. The HorizontalPodAutoscaler is pinned at its maximum replica count.",
+    "service": "api-gateway",
+    "environment": "staging",
+    "severity": "sev2",
+    "timestamp": "2026-04-29T09:08:00Z",
+    "symptoms": [
+      "CPU above 95% on every pod",
+      "HPA at maxReplicas",
+      "latency rising with traffic"
+    ],
+    "error_messages": [
+      "HPA api-gateway: desired replicas 14 exceeds maxReplicas 4"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "chg-1059",
+        "change_type": "config",
+        "description": "HPA maxReplicas lowered from 20 to 4",
+        "timestamp": "2026-04-29T05:08:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "p99_latency_ms": 2735.38,
+      "cpu_pct": 99.45,
+      "requests_per_sec": 1377.03,
+      "replica_count": 3.89
+    },
+    "deployment_id": null,
+    "tags": [
+      "autoscaling",
+      "hpa",
+      "kubernetes",
+      "capacity",
+      "api-gateway",
+      "staging"
+    ],
+    "ground_truth_root_cause": "HPA maxReplicas was lowered from 20 to 4, so api-gateway could not scale out for peak traffic. Pods saturate on CPU and latency climbs.",
+    "root_cause_category": "autoscaling_misconfiguration",
+    "expected_remediation": "Restore maxReplicas to 20, and alert when an HPA sits at maxReplicas for more than 10 minutes.",
+    "incident_id": "INC-1059",
+    "status": "resolved",
+    "relevant_runbook_ids": [
+      "autoscaling-misconfiguration",
+      "latency-spike"
+    ]
+  },
+  {
+    "title": "checkout-api 5xx spike after traffic increase",
+    "description": "checkout-api is returning HTTP 500 and 503 errors for a large share of requests. Latency climbed sharply at the same time as a traffic increase. Requests appear to be waiting on the database.",
+    "service": "checkout-api",
+    "environment": "production",
+    "severity": "sev1",
+    "timestamp": "2026-04-30T08:47:00Z",
+    "symptoms": [
+      "HTTP 5xx error rate above 15%",
+      "p99 latency above 4 seconds",
+      "request threads blocked waiting for database connections",
+      "traffic roughly 2.5x normal"
+    ],
+    "error_messages": [
+      "HikariPool-1 - Connection is not available, request timed out after 30000ms",
+      "FATAL: remaining connection slots are reserved for non-replication superuser connections"
+    ],
+    "recent_changes": [
+      {
+        "change_id": "dep-00157",
+        "change_type": "deployment",
+        "description": "v2.25.0: Copy change on order confirmation page",
+        "timestamp": "2026-04-30T05:47:00Z"
+      },
+      {
+        "change_id": "chg-1060",
+        "change_type": "traffic",
+        "description": "Flash sale campaign launched; traffic about 2.5x baseline",
+        "timestamp": "2026-04-30T08:22:00Z"
+      }
+    ],
+    "metrics_summary": {
+      "error_rate_pct": 20.67,
+      "p99_latency_ms": 4736.24,
+      "requests_per_sec": 1155.64,
+      "db_connections_in_use": 99.9,
+      "db_pool_wait_ms": 11012.86
+    },
+    "deployment_id": "dep-00157",
+    "tags": [
+      "database",
+      "postgres",
+      "connection-pool",
+      "5xx",
+      "traffic",
+      "checkout-api",
+      "production"
+    ],
+    "ground_truth_root_cause": "PostgreSQL connection pool exhaustion. The traffic surge from the flash sale saturated the fixed pool of 100 connections, slow queries held connections longer, and requests queued until they timed out and returned 5xx.",
+    "root_cause_category": "postgres_pool_exhaustion",
+    "expected_remediation": "Raise the connection pool size within the database max_connections budget, put PgBouncer in front of PostgreSQL, terminate idle-in-transaction sessions, rate limit campaign traffic, and restart the service only if connections have leaked.",
+    "incident_id": "INC-1060",
+    "status": "open",
+    "relevant_runbook_ids": [
+      "postgres-connection-pool-exhaustion",
+      "api-5xx-spike"
+    ]
+  }
+]

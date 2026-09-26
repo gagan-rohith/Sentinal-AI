@@ -1,0 +1,1415 @@
+[
+  {
+    "deployment_id": "dep-00010",
+    "service": "analytics-consumer",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:42:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00025",
+    "service": "analytics-consumer",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T17:45:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Increase in-process product catalog cache from 256MB to 2GB"
+  },
+  {
+    "deployment_id": "dep-00031",
+    "service": "analytics-consumer",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:29:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00046",
+    "service": "analytics-consumer",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:48:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00047",
+    "service": "analytics-consumer",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:00:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00063",
+    "service": "analytics-consumer",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:39:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00071",
+    "service": "analytics-consumer",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:04:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00083",
+    "service": "analytics-consumer",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:32:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00090",
+    "service": "analytics-consumer",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:08:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00102",
+    "service": "analytics-consumer",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:04:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00114",
+    "service": "analytics-consumer",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:23:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00124",
+    "service": "analytics-consumer",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:10:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00145",
+    "service": "analytics-consumer",
+    "version": "v2.23.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:34:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00156",
+    "service": "analytics-consumer",
+    "version": "v2.24.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:39:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00004",
+    "service": "api-gateway",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:03:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00016",
+    "service": "api-gateway",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:11:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00034",
+    "service": "api-gateway",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:38:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00053",
+    "service": "api-gateway",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:43:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00061",
+    "service": "api-gateway",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:25:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00075",
+    "service": "api-gateway",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:36:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00084",
+    "service": "api-gateway",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:37:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00096",
+    "service": "api-gateway",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:39:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00106",
+    "service": "api-gateway",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:26:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00127",
+    "service": "api-gateway",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:16:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00136",
+    "service": "api-gateway",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:42:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00142",
+    "service": "api-gateway",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:15:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00150",
+    "service": "api-gateway",
+    "version": "v2.23.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:25:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00006",
+    "service": "auth-service",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:05:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00015",
+    "service": "auth-service",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:04:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00028",
+    "service": "auth-service",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:08:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00044",
+    "service": "auth-service",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:35:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00059",
+    "service": "auth-service",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:16:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00073",
+    "service": "auth-service",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:13:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00086",
+    "service": "auth-service",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:45:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00093",
+    "service": "auth-service",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:25:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00107",
+    "service": "auth-service",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:28:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00113",
+    "service": "auth-service",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:07:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00125",
+    "service": "auth-service",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:14:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00132",
+    "service": "auth-service",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:21:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00146",
+    "service": "auth-service",
+    "version": "v2.23.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:37:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00155",
+    "service": "auth-service",
+    "version": "v2.24.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:37:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00011",
+    "service": "billing-service",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:42:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00022",
+    "service": "billing-service",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:42:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00039",
+    "service": "billing-service",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:08:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00051",
+    "service": "billing-service",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:07:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00066",
+    "service": "billing-service",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:47:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00074",
+    "service": "billing-service",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:17:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00095",
+    "service": "billing-service",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:38:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00100",
+    "service": "billing-service",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-06T08:40:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Add discount codes to invoices (migration 0042)"
+  },
+  {
+    "deployment_id": "dep-00119",
+    "service": "billing-service",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:45:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00149",
+    "service": "billing-service",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:13:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00008",
+    "service": "checkout-api",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:35:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00024",
+    "service": "checkout-api",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:47:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00033",
+    "service": "checkout-api",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:37:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00042",
+    "service": "checkout-api",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:23:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00052",
+    "service": "checkout-api",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:08:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00068",
+    "service": "checkout-api",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-23T03:37:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Store user sessions in the shared cache cluster"
+  },
+  {
+    "deployment_id": "dep-00072",
+    "service": "checkout-api",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:05:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00079",
+    "service": "checkout-api",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:07:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00097",
+    "service": "checkout-api",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:40:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00110",
+    "service": "checkout-api",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:50:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00118",
+    "service": "checkout-api",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:38:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00128",
+    "service": "checkout-api",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:24:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00135",
+    "service": "checkout-api",
+    "version": "v2.23.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:38:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00144",
+    "service": "checkout-api",
+    "version": "v2.24.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:33:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00157",
+    "service": "checkout-api",
+    "version": "v2.25.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-30T05:47:00Z",
+    "author": "ci-bot",
+    "change_summary": "Copy change on order confirmation page"
+  },
+  {
+    "deployment_id": "dep-00002",
+    "service": "inventory-service",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:00:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00023",
+    "service": "inventory-service",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:45:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00029",
+    "service": "inventory-service",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:14:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00049",
+    "service": "inventory-service",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:02:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00058",
+    "service": "inventory-service",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:04:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00082",
+    "service": "inventory-service",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:17:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00098",
+    "service": "inventory-service",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-04T08:19:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Add region filter to product listing API"
+  },
+  {
+    "deployment_id": "dep-00105",
+    "service": "inventory-service",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:13:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00120",
+    "service": "inventory-service",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:46:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00126",
+    "service": "inventory-service",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:15:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00133",
+    "service": "inventory-service",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:26:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00148",
+    "service": "inventory-service",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:06:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00009",
+    "service": "notification-worker",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:42:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00018",
+    "service": "notification-worker",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:22:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00030",
+    "service": "notification-worker",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:26:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00054",
+    "service": "notification-worker",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:46:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00065",
+    "service": "notification-worker",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:43:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00070",
+    "service": "notification-worker",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:03:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00087",
+    "service": "notification-worker",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:46:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00089",
+    "service": "notification-worker",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:06:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00104",
+    "service": "notification-worker",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:12:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00116",
+    "service": "notification-worker",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:34:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00123",
+    "service": "notification-worker",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:08:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00140",
+    "service": "notification-worker",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:11:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00151",
+    "service": "notification-worker",
+    "version": "v2.23.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:29:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00001",
+    "service": "orders-service",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T01:01:00Z",
+    "author": "ci-bot",
+    "change_summary": "Copy change on order confirmation page"
+  },
+  {
+    "deployment_id": "dep-00013",
+    "service": "orders-service",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-04T07:48:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Increase in-process product catalog cache from 256MB to 2GB"
+  },
+  {
+    "deployment_id": "dep-00021",
+    "service": "orders-service",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:40:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00035",
+    "service": "orders-service",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:40:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00040",
+    "service": "orders-service",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:09:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00055",
+    "service": "orders-service",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:48:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00062",
+    "service": "orders-service",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:34:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00085",
+    "service": "orders-service",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:38:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00101",
+    "service": "orders-service",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T04:09:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Add discount codes to invoices (migration 0042)"
+  },
+  {
+    "deployment_id": "dep-00115",
+    "service": "orders-service",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:31:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00121",
+    "service": "orders-service",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:07:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00131",
+    "service": "orders-service",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:19:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00139",
+    "service": "orders-service",
+    "version": "v2.23.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:03:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00154",
+    "service": "orders-service",
+    "version": "v2.24.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:36:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00012",
+    "service": "payments-service",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-03T06:15:00Z",
+    "author": "ci-bot",
+    "change_summary": "Copy change on order confirmation page"
+  },
+  {
+    "deployment_id": "dep-00020",
+    "service": "payments-service",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:35:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00026",
+    "service": "payments-service",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T08:20:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Refactor serializer for address payloads"
+  },
+  {
+    "deployment_id": "dep-00045",
+    "service": "payments-service",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:43:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00064",
+    "service": "payments-service",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:43:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00078",
+    "service": "payments-service",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:49:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00080",
+    "service": "payments-service",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:07:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00094",
+    "service": "payments-service",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:27:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00108",
+    "service": "payments-service",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:29:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00138",
+    "service": "payments-service",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:46:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00143",
+    "service": "payments-service",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:32:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00152",
+    "service": "payments-service",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:32:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00005",
+    "service": "search-api",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:04:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00014",
+    "service": "search-api",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-05T04:23:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Increase in-process product catalog cache from 256MB to 2GB"
+  },
+  {
+    "deployment_id": "dep-00032",
+    "service": "search-api",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:35:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00038",
+    "service": "search-api",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:03:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00050",
+    "service": "search-api",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:05:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00057",
+    "service": "search-api",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T02:39:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Store user sessions in the shared cache cluster"
+  },
+  {
+    "deployment_id": "dep-00088",
+    "service": "search-api",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T02:32:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Add region filter to product listing API"
+  },
+  {
+    "deployment_id": "dep-00103",
+    "service": "search-api",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:10:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00134",
+    "service": "search-api",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:31:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00141",
+    "service": "search-api",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:13:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00007",
+    "service": "shipping-service",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:32:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00017",
+    "service": "shipping-service",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:16:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00027",
+    "service": "shipping-service",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-10T09:05:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00037",
+    "service": "shipping-service",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-12T18:00:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Refactor serializer for address payloads"
+  },
+  {
+    "deployment_id": "dep-00041",
+    "service": "shipping-service",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:17:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00048",
+    "service": "shipping-service",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:00:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00067",
+    "service": "shipping-service",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:49:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00076",
+    "service": "shipping-service",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:40:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00091",
+    "service": "shipping-service",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:10:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00109",
+    "service": "shipping-service",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-07T09:35:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00117",
+    "service": "shipping-service",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:35:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00122",
+    "service": "shipping-service",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:07:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00137",
+    "service": "shipping-service",
+    "version": "v2.23.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:44:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00003",
+    "service": "user-profile-service",
+    "version": "v2.11.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-02T09:03:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00019",
+    "service": "user-profile-service",
+    "version": "v2.12.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-06T09:24:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00036",
+    "service": "user-profile-service",
+    "version": "v2.13.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-11T19:49:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Refactor serializer for address payloads"
+  },
+  {
+    "deployment_id": "dep-00043",
+    "service": "user-profile-service",
+    "version": "v2.14.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-14T09:24:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00056",
+    "service": "user-profile-service",
+    "version": "v2.15.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-18T09:50:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00060",
+    "service": "user-profile-service",
+    "version": "v2.16.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-22T09:18:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00069",
+    "service": "user-profile-service",
+    "version": "v2.17.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-24T11:53:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Store user sessions in the shared cache cluster"
+  },
+  {
+    "deployment_id": "dep-00077",
+    "service": "user-profile-service",
+    "version": "v2.18.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-26T09:44:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00081",
+    "service": "user-profile-service",
+    "version": "v2.19.0",
+    "status": "succeeded",
+    "timestamp": "2026-03-30T09:09:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00092",
+    "service": "user-profile-service",
+    "version": "v2.20.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-03T09:18:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  },
+  {
+    "deployment_id": "dep-00099",
+    "service": "user-profile-service",
+    "version": "v2.21.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-05T09:35:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Add region filter to product listing API"
+  },
+  {
+    "deployment_id": "dep-00111",
+    "service": "user-profile-service",
+    "version": "v2.22.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-08T09:14:00Z",
+    "author": "release-pipeline",
+    "change_summary": "Add discount codes to invoices (migration 0042)"
+  },
+  {
+    "deployment_id": "dep-00112",
+    "service": "user-profile-service",
+    "version": "v2.23.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-11T09:03:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00129",
+    "service": "user-profile-service",
+    "version": "v2.24.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-15T09:47:00Z",
+    "author": "ci-bot",
+    "change_summary": "Minor bug fixes"
+  },
+  {
+    "deployment_id": "dep-00130",
+    "service": "user-profile-service",
+    "version": "v2.25.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-19T09:03:00Z",
+    "author": "ci-bot",
+    "change_summary": "Dependency updates"
+  },
+  {
+    "deployment_id": "dep-00147",
+    "service": "user-profile-service",
+    "version": "v2.26.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-23T09:37:00Z",
+    "author": "ci-bot",
+    "change_summary": "Refactor internal client"
+  },
+  {
+    "deployment_id": "dep-00153",
+    "service": "user-profile-service",
+    "version": "v2.27.0",
+    "status": "succeeded",
+    "timestamp": "2026-04-27T09:32:00Z",
+    "author": "ci-bot",
+    "change_summary": "Improve request logging"
+  }
+]

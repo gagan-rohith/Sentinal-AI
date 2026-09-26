@@ -1,0 +1,10 @@
+# Runtime dependencies. pyproject.toml is the source of truth; this file is for
+# environments that install with pip -r (Docker images, CI caches).
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.8
+pydantic-settings>=2.4
+httpx>=0.27
+aiosqlite>=0.20
+structlog>=24.1
+pyyaml>=6.0
