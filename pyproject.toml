@@ -17,9 +17,16 @@ dependencies = [
     "aiosqlite>=0.20",
     "structlog>=24.1",
     "pyyaml>=6.0",
+    "elasticsearch[async]>=8.13,<9",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
+# Local embedding and reranking models. Install CPU torch first to avoid the CUDA build:
+# pip install torch --index-url https://download.pytorch.org/whl/cpu
+ml = [
+    "sentence-transformers>=6.0",
+]
 dev = [
     "pytest>=8.2",
     "pytest-asyncio>=0.24",
@@ -74,7 +81,7 @@ markers = [
 addopts = "-ra"
 
 [tool.coverage.run]
-source = ["app", "auth", "core", "data", "storage", "tools"]
+source = ["app", "auth", "core", "data", "retrieval", "storage", "tools"]
 omit = ["*/__main__.py"]
 
 [tool.coverage.report]

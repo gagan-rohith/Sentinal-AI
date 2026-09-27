@@ -21,6 +21,7 @@ from core.exceptions import (
     ToolTimeoutError,
 )
 from core.models import ServiceHealth
+from retrieval.hybrid_search import HybridSearcher
 from tools.backend import SimulatedOpsBackend
 from tools.common import ActionResult, WindowQuery
 from tools.deployments import (
@@ -41,6 +42,14 @@ from tools.kubernetes import (
 )
 from tools.logs import LogsQuery, LogsResult, get_recent_logs
 from tools.metrics import MetricsResult, get_service_metrics
+from tools.search import (
+    KnowledgeQuery,
+    SearchQuery,
+    SearchResults,
+    search_knowledge,
+    search_runbooks,
+    search_similar_incidents,
+)
 from tools.service_health import HealthQuery, get_service_health
 from tools.tickets import Ticket, TicketRequest, TicketStore
 
@@ -215,12 +224,37 @@ class ToolRegistry:
 def build_default_registry(
     backend: SimulatedOpsBackend,
     tickets: TicketStore,
+    searcher: HybridSearcher,
     approvals: ApprovalVerifier | None = None,
     timeout_s: float = 5.0,
 ) -> ToolRegistry:
     registry = ToolRegistry(approvals)
     read = Permission.READ_TOOLS
     specs = [
+        ToolSpec(
+            "search_runbooks",
+            "Hybrid (BM25 + vector) search over runbook sections.",
+            SearchQuery,
+            SearchResults,
+            partial(search_runbooks, searcher),
+            read,
+        ),
+        ToolSpec(
+            "search_similar_incidents",
+            "Hybrid search over resolved incidents, including their root causes.",
+            SearchQuery,
+            SearchResults,
+            partial(search_similar_incidents, searcher),
+            read,
+        ),
+        ToolSpec(
+            "search_knowledge",
+            "Search runbooks, incidents, service docs and log snippets with filters.",
+            KnowledgeQuery,
+            SearchResults,
+            partial(search_knowledge, searcher),
+            read,
+        ),
         ToolSpec(
             "get_service_health",
             "Current health status of a service derived from metrics.",

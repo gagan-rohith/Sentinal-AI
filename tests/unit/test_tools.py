@@ -19,6 +19,7 @@ from core.exceptions import (
     UnauthorizedActionError,
 )
 from core.models import Incident
+from retrieval.hybrid_search import HybridSearcher
 from tools.backend import SimulatedOpsBackend
 from tools.common import WindowQuery
 from tools.deployments import (
@@ -54,8 +55,8 @@ class ApproveOnly:
 
 
 @pytest.fixture
-def registry(backend: SimulatedOpsBackend) -> ToolRegistry:
-    return build_default_registry(backend, TicketStore(), approvals=ApproveOnly("apr-1"))
+def registry(backend: SimulatedOpsBackend, searcher: HybridSearcher) -> ToolRegistry:
+    return build_default_registry(backend, TicketStore(), searcher, approvals=ApproveOnly("apr-1"))
 
 
 def test_normalize_groups_volatile_tokens() -> None:
@@ -298,6 +299,24 @@ def test_duplicate_registration_rejected() -> None:
     registry.register(_spec("x", handler))
     with pytest.raises(ValueError, match="already registered"):
         registry.register(_spec("x", handler))
+
+
+async def test_search_tools_scope_source_types(
+    registry: ToolRegistry, demo_incident: Incident
+) -> None:
+    runbooks = await registry.invoke(
+        "search_runbooks", {"query": "database connection pool exhausted"}, OPERATOR
+    )
+    assert {h["source_type"] for h in runbooks.output.model_dump()["hits"]} == {"runbook"}
+
+    incidents = await registry.invoke(
+        "search_similar_incidents",
+        {"query": demo_incident.search_text(), "exclude_incident_ids": [demo_incident.incident_id]},
+        OPERATOR,
+    )
+    hits = incidents.output.model_dump()["hits"]
+    assert {h["source_type"] for h in hits} == {"incident"}
+    assert demo_incident.incident_id not in {h["incident_id"] for h in hits}
 
 
 def test_default_registry_marks_only_mutating_tools_destructive(registry: ToolRegistry) -> None:

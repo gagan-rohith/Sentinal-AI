@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
 
+from app.config import Settings
+from app.main import create_app
 from core.enums import Role
 from core.models import Incident
 from tests.conftest import DEMO_INCIDENT_ID, headers
@@ -10,7 +12,50 @@ def test_health(client: TestClient) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
-    assert body["checks"] == {"database": "ok", "incidents": "ok"}
+    assert body["checks"] == {"database": "ok", "incidents": "ok", "search": "ok"}
+
+
+def test_app_starts_degraded_when_elasticsearch_is_down(settings: Settings) -> None:
+    down = settings.model_copy(
+        update={
+            "search_backend": "elasticsearch",
+            "elasticsearch_url": "http://127.0.0.1:1",
+            # Windows takes about 2s to refuse a connection; keep the tool budget above that.
+            "tool_timeout_seconds": 15.0,
+        }
+    )
+    with TestClient(create_app(down)) as client:
+        health = client.get("/health")
+        assert health.status_code == 200
+        assert health.json()["status"] == "degraded"
+        assert health.json()["checks"]["search"].startswith("unavailable")
+
+        search = client.get(
+            "/tools/search", params={"q": "pool exhausted"}, headers=headers(Role.OPERATOR)
+        )
+        assert search.status_code == 503
+        assert search.json()["error"]["code"] == "search_unavailable"
+
+        # Everything that does not need search keeps working.
+        assert client.get("/incidents", headers=headers(Role.VIEWER)).status_code == 200
+
+
+def test_search_endpoint(client: TestClient) -> None:
+    response = client.get(
+        "/tools/search",
+        params={"q": "connection pool exhausted", "source_type": "runbook", "top_k": 3},
+        headers=headers(Role.OPERATOR),
+    )
+    assert response.status_code == 200
+    hits = response.json()["hits"]
+    assert len(hits) == 3
+    assert hits[0]["parent_id"] == "runbook:postgres-connection-pool-exhaustion"
+    assert {h["source_type"] for h in hits} == {"runbook"}
+
+
+def test_search_endpoint_validates_query(client: TestClient) -> None:
+    response = client.get("/tools/search", params={"q": "a"}, headers=headers(Role.OPERATOR))
+    assert response.status_code == 422
 
 
 def test_openapi_docs_load(client: TestClient) -> None:
