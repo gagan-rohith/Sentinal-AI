@@ -58,6 +58,7 @@ three hours earlier, which is the obvious suspect.
 | ![Approval panel](docs/images/approval.png) | ![Hypotheses in the report](docs/images/report.png) |
 
 To see the whole flow in a terminal without any setup beyond Python: `make demo ARGS=--memory`.
+The [demo guide](docs/DEMO.md) walks through it in the web UI, the terminal and Claude Desktop.
 
 ## Architecture
 
@@ -351,7 +352,7 @@ storage/         SQLite repositories
 tools/           ops tools and the tool registry
 frontend/        React web UI
 docker/ k8s/ terraform/ .github/   deployment and CI
-docs/            deployment, MCP and demo script
+docs/            deployment, MCP and demo guide
 ```
 
 ## License
