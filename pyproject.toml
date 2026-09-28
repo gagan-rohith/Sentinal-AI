@@ -19,6 +19,8 @@ dependencies = [
     "pyyaml>=6.0",
     "elasticsearch[async]>=8.13,<9",
     "numpy>=1.26",
+    "langgraph>=1.2",
+    "anthropic>=1.8",
 ]
 
 [project.optional-dependencies]
@@ -81,7 +83,7 @@ markers = [
 addopts = "-ra"
 
 [tool.coverage.run]
-source = ["app", "auth", "core", "data", "retrieval", "storage", "tools"]
+source = ["agents", "app", "auth", "core", "data", "graph", "retrieval", "storage", "tools"]
 omit = ["*/__main__.py"]
 
 [tool.coverage.report]

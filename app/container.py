@@ -2,16 +2,21 @@ from dataclasses import dataclass
 
 import structlog
 
+from agents.llm import AnthropicLLM, StructuredLLM
 from app.config import Settings
 from auth.api_keys import ApiKeyAuthenticator, parse_key_config
+from auth.permissions import AGENT_PRINCIPAL
 from core.exceptions import SearchUnavailableError
 from data.loader import load_incidents
+from graph.runner import IncidentAnalyzer
+from graph.state import AgentDeps
 from retrieval.backend import SearchBackend
 from retrieval.factory import create_search_backend, embedder_from_settings, reranker_from_settings
 from retrieval.hybrid_search import HybridSearcher
 from retrieval.indexing import build_documents, ingest
 from storage.db import Database
 from storage.incidents import IncidentRepository
+from storage.runs import RunRepository
 from tools.backend import SimulatedOpsBackend
 from tools.tickets import TicketStore
 from tools.tool_registry import ToolRegistry, build_default_registry
@@ -31,6 +36,7 @@ class Container:
     searcher: HybridSearcher
     tools: ToolRegistry
     api_keys: ApiKeyAuthenticator
+    analyzer: IncidentAnalyzer
 
     @classmethod
     async def create(cls, settings: Settings) -> "Container":
@@ -50,6 +56,12 @@ class Container:
         tools = build_default_registry(
             backend, TicketStore(), searcher, timeout_s=settings.tool_timeout_seconds
         )
+        deps = AgentDeps(
+            tools=tools,
+            llm=create_llm(settings),
+            principal=AGENT_PRINCIPAL,
+            max_retries=settings.max_critic_retries,
+        )
         return cls(
             settings=settings,
             db=db,
@@ -59,11 +71,23 @@ class Container:
             searcher=searcher,
             tools=tools,
             api_keys=ApiKeyAuthenticator(parse_key_config(settings.api_keys)),
+            analyzer=IncidentAnalyzer(deps, RunRepository(db)),
         )
 
     async def close(self) -> None:
+        await self.analyzer.shutdown()
         await self.search_backend.close()
         await self.db.close()
+
+
+def create_llm(settings: Settings) -> StructuredLLM | None:
+    key = settings.anthropic_api_key.get_secret_value() if settings.anthropic_api_key else None
+    if settings.llm_provider == "heuristic" or (settings.llm_provider == "auto" and not key):
+        log.info("llm_disabled", reason="heuristic mode")
+        return None
+    # With llm_provider=anthropic and no key, the SDK resolves credentials itself
+    # (for example an `ant auth login` profile).
+    return AnthropicLLM(settings.llm_model, api_key=key, timeout_s=settings.llm_timeout_seconds)
 
 
 async def _ensure_indexed(

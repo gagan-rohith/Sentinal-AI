@@ -19,3 +19,8 @@ class Principal(BaseModel):
                 f"role '{self.role}' is missing permission '{permission}'",
                 details={"subject": self.subject, "required": permission.value},
             )
+
+
+# Identity the agents use for tool calls. Operator role: it can read telemetry and
+# search, but can never execute destructive remediation.
+AGENT_PRINCIPAL = Principal(subject="agent:sentinel", role=Role.OPERATOR, auth_method="internal")

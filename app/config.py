@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from data import DATA_DIR
@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     embedding_provider: Literal["sentence-transformers", "hash"] = "sentence-transformers"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     reranker_model: str | None = None
+
+    # auto: Claude when ANTHROPIC_API_KEY is set, deterministic heuristics otherwise.
+    llm_provider: Literal["auto", "anthropic", "heuristic"] = "auto"
+    anthropic_api_key: SecretStr | None = None
+    llm_model: str = "claude-sonnet-5"
+    llm_timeout_seconds: float = Field(default=60.0, gt=0)
+    max_critic_retries: int = Field(default=3, ge=0, le=10)
 
 
 @lru_cache(maxsize=1)

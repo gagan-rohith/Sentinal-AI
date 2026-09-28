@@ -14,6 +14,21 @@ CREATE TABLE IF NOT EXISTS incidents (
 );
 CREATE INDEX IF NOT EXISTS ix_incidents_fingerprint ON incidents (fingerprint);
 CREATE INDEX IF NOT EXISTS ix_incidents_service ON incidents (service);
+
+CREATE TABLE IF NOT EXISTS runs (
+    run_id TEXT PRIMARY KEY,
+    incident_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    stage TEXT,
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    requested_by TEXT NOT NULL,
+    error_code TEXT,
+    error_message TEXT,
+    report TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_runs_incident ON runs (incident_id);
 """
 
 

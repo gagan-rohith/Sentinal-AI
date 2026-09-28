@@ -65,6 +65,13 @@ class ApprovalStatus(StrEnum):
     REJECTED = "rejected"
 
 
+class RunStatus(StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class Role(StrEnum):
     VIEWER = "viewer"
     OPERATOR = "operator"

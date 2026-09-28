@@ -21,6 +21,7 @@ from core.exceptions import (
     ToolTimeoutError,
 )
 from core.models import ServiceHealth
+from data.loader import load_runbooks
 from retrieval.hybrid_search import HybridSearcher
 from tools.backend import SimulatedOpsBackend
 from tools.common import ActionResult, WindowQuery
@@ -42,6 +43,7 @@ from tools.kubernetes import (
 )
 from tools.logs import LogsQuery, LogsResult, get_recent_logs
 from tools.metrics import MetricsResult, get_service_metrics
+from tools.runbooks import RunbookDocument, RunbookLibrary, RunbookQuery
 from tools.search import (
     KnowledgeQuery,
     SearchQuery,
@@ -227,10 +229,20 @@ def build_default_registry(
     searcher: HybridSearcher,
     approvals: ApprovalVerifier | None = None,
     timeout_s: float = 5.0,
+    runbooks: RunbookLibrary | None = None,
 ) -> ToolRegistry:
     registry = ToolRegistry(approvals)
     read = Permission.READ_TOOLS
+    runbooks = runbooks or RunbookLibrary(load_runbooks())
     specs = [
+        ToolSpec(
+            "get_runbook",
+            "Full runbook by id, split into sections.",
+            RunbookQuery,
+            RunbookDocument,
+            runbooks.get,
+            read,
+        ),
         ToolSpec(
             "search_runbooks",
             "Hybrid (BM25 + vector) search over runbook sections.",

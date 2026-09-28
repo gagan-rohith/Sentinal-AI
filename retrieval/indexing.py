@@ -85,6 +85,8 @@ def incident_document(incident: Incident) -> SearchDocument:
             "incident_id": incident.incident_id,
             "root_cause_category": incident.root_cause_category,
             "runbook_ids": incident.relevant_runbook_ids,
+            "root_cause": incident.ground_truth_root_cause,
+            "remediation": incident.expected_remediation,
         },
     )
 
