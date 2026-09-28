@@ -143,19 +143,25 @@ class IncidentAnalyzer:
             record_run("completed", report.retries)
             log.info("run_completed", retries=report.retries, mode=report.mode)
         except asyncio.CancelledError:
-            await self.runs.fail(run_id, "cancelled", "the service shut down during the run")
-            record_run("failed")
+            await self._record_failure(run_id, "cancelled", "the service shut down during the run")
             raise
         except SentinelError as exc:
             log.warning("run_failed", code=exc.code, error=exc.message)
-            await self.runs.fail(run_id, exc.code, exc.message)
-            record_run("failed")
+            await self._record_failure(run_id, exc.code, exc.message)
         except Exception as exc:
             # A background task has no caller to raise to; record the failure and keep
             # the traceback in the logs.
             log.exception("run_crashed")
-            await self.runs.fail(run_id, "internal_error", f"{type(exc).__name__}: {exc}")
-            record_run("failed")
+            await self._record_failure(run_id, "internal_error", f"{type(exc).__name__}: {exc}")
+
+    async def _record_failure(self, run_id: str, code: str, message: str) -> None:
+        record_run("failed")
+        try:
+            await self.runs.fail(run_id, code, message)
+        except Exception:
+            # The store itself is failing, so the run stays marked running until the next
+            # startup marks it interrupted. Log it rather than let it escape the task.
+            log.exception("run_failure_not_recorded", code=code, error=message)
 
     async def _pause(self, run_id: str, tasks: Any) -> None:
         interrupts = [i for task in tasks for i in task.interrupts]

@@ -2,6 +2,7 @@ name: sentinel-ai
 
 # Local stack. From the repository root:
 #   docker compose up --build                            # Elasticsearch, index job, API
+#   docker compose --profile frontend up --build         # plus the web UI on :3000
 #   docker compose --profile observability up --build    # plus Prometheus on :9090
 #   docker compose --profile kibana up                   # plus Kibana on :5601
 #
@@ -73,6 +74,17 @@ services:
       ingest:
         condition: service_completed_successfully
     restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+    image: sentinel-ai-frontend:local
+    profiles: ["frontend"]
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:v3.2.1

@@ -245,6 +245,25 @@ async def test_unexpected_crash_is_recorded(
     assert (finished.error_code, finished.error_message) == ("internal_error", "RuntimeError: boom")
 
 
+async def test_failure_to_record_a_failure_is_contained(
+    analyzer: IncidentAnalyzer, demo_incident: Incident, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def explode(*_: Any, **__: Any) -> Any:
+        raise RuntimeError("boom")
+        yield  # pragma: no cover
+
+    async def store_down(*_: Any, **__: Any) -> None:
+        raise RuntimeError("database is locked")
+
+    monkeypatch.setattr(analyzer.graph, "astream", explode)
+    monkeypatch.setattr(analyzer.runs, "fail", store_down)
+    run = await analyzer.start(demo_incident, "tester")
+    # The task finishes cleanly instead of raising "exception was never retrieved".
+    finished = await analyzer.wait(run.run_id)
+    assert finished.status is RunStatus.RUNNING
+    assert await analyzer.runs.fail_interrupted() == 1
+
+
 async def test_shutdown_marks_running_runs_cancelled(
     analyzer: IncidentAnalyzer, demo_incident: Incident, monkeypatch: pytest.MonkeyPatch
 ) -> None:
