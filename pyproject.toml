@@ -22,6 +22,7 @@ dependencies = [
     "langgraph>=1.2",
     "langgraph-checkpoint-sqlite>=3.0",
     "anthropic>=1.8",
+    "mcp>=2.2,<3",
 ]
 
 [project.optional-dependencies]
@@ -84,7 +85,9 @@ markers = [
 addopts = "-ra"
 
 [tool.coverage.run]
-source = ["agents", "app", "auth", "core", "data", "graph", "retrieval", "storage", "tools"]
+source = [
+    "agents", "app", "auth", "core", "data", "graph", "mcp_server", "retrieval", "storage", "tools",
+]
 omit = ["*/__main__.py"]
 
 [tool.coverage.report]
