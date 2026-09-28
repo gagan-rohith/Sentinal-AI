@@ -1,4 +1,4 @@
-import type { Evidence, FinalReport, Hypothesis } from "../api";
+import type { Evidence, FinalReport, Hypothesis, Severity } from "../api";
 import { dateTime, percent } from "../format";
 import { EvidenceChip, Meter, Tag } from "./ui";
 
@@ -28,6 +28,27 @@ function isRuledOut(h: Hypothesis): boolean {
   return h.confidence === 0 || h.evidence_against.length > h.evidence_for.length;
 }
 
+function TriageLine({ report, reported }: { report: FinalReport; reported?: Severity }) {
+  const { triage } = report;
+  if (!triage) return null;
+  const assessed = triage.assessed_severity;
+  let severity = <>severity {assessed}</>;
+  if (reported && assessed === reported) severity = <>severity confirmed as {assessed}</>;
+  else if (reported) {
+    const direction = assessed < reported ? "raised" : "lowered";
+    severity = (
+      <>
+        severity {direction} to {assessed} (reported {reported}): {triage.severity_reason}
+      </>
+    );
+  }
+  return (
+    <p className="triage-line">
+      Triage: <Tag tone="info">{triage.subsystem}</Tag> problem, {severity}
+    </p>
+  );
+}
+
 function Chapter({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <section className="card chapter">
@@ -40,7 +61,7 @@ function Chapter({ n, title, children }: { n: number; title: string; children: R
   );
 }
 
-export function ReportView({ report }: { report: FinalReport }) {
+export function ReportView({ report, reported }: { report: FinalReport; reported?: Severity }) {
   const evidence = new Map(report.evidence.map((e) => [e.id, e]));
   const { postmortem, remediation_plan: plan, selected_root_cause: selected } = report;
   const hypotheses = [...report.hypotheses].sort((a, b) => b.confidence - a.confidence);
@@ -63,6 +84,7 @@ export function ReportView({ report }: { report: FinalReport }) {
       </section>
 
       <Chapter n={1} title="What happened">
+        <TriageLine report={report} reported={reported} />
         <p>{postmortem.summary}</p>
         <p className="impact">{postmortem.impact}</p>
         <ol className="timeline">

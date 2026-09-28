@@ -174,7 +174,7 @@ export function App() {
                   {run.approval && run.run?.status === "awaiting_approval" && (
                     <ApprovalPanel approval={run.approval} busy={run.busy} onDecide={run.decide} />
                   )}
-                  {run.report && <ReportView report={run.report} />}
+                  {run.report && <ReportView report={run.report} reported={selected.severity} />}
                 </>
               ) : (
                 <p className="muted">Select an incident.</p>

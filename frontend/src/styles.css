@@ -852,6 +852,10 @@ tr.clickable:hover {
   font-weight: 700;
 }
 
+.triage-line {
+  color: var(--ink-2);
+}
+
 .impact {
   color: var(--ink-2);
 }

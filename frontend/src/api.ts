@@ -117,6 +117,11 @@ export interface FinalReport {
   run_id: string;
   trace_id: string | null;
   mode: "llm" | "heuristic" | "mixed";
+  triage: {
+    assessed_severity: Severity;
+    severity_reason: string;
+    subsystem: string;
+  } | null;
   postmortem: {
     title: string;
     summary: string;

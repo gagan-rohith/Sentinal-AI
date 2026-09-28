@@ -153,6 +153,7 @@ async def postmortem_node(deps: AgentDeps, state: IncidentState) -> dict[str, An
         run_id=state["run_id"],
         incident_id=state["incident"].incident_id,
         trace_id=state.get("trace_id"),
+        triage=state.get("triage_summary"),
         postmortem=draft,
         timeline=build_timeline(state),
         selected_root_cause=selected,
