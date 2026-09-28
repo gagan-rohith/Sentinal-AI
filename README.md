@@ -6,9 +6,9 @@ with hybrid retrieval on Elasticsearch, ranks root cause hypotheses against the 
 proposes a remediation plan. Anything that changes production waits for a human with the right
 role to approve it.
 
-[![lint](https://github.com/gagan-rohith/Sentinal-AI/actions/workflows/lint.yml/badge.svg)](https://github.com/gagan-rohith/Sentinal-AI/actions/workflows/lint.yml)
-[![test](https://github.com/gagan-rohith/Sentinal-AI/actions/workflows/test.yml/badge.svg)](https://github.com/gagan-rohith/Sentinal-AI/actions/workflows/test.yml)
-[![docker](https://github.com/gagan-rohith/Sentinal-AI/actions/workflows/docker.yml/badge.svg)](https://github.com/gagan-rohith/Sentinal-AI/actions/workflows/docker.yml)
+[![lint](https://github.com/gagan-rohith/sentinel-ai/actions/workflows/lint.yml/badge.svg)](https://github.com/gagan-rohith/sentinel-ai/actions/workflows/lint.yml)
+[![test](https://github.com/gagan-rohith/sentinel-ai/actions/workflows/test.yml/badge.svg)](https://github.com/gagan-rohith/sentinel-ai/actions/workflows/test.yml)
+[![docker](https://github.com/gagan-rohith/sentinel-ai/actions/workflows/docker.yml/badge.svg)](https://github.com/gagan-rohith/sentinel-ai/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Demo video:** _coming soon_
@@ -135,8 +135,8 @@ Design decisions and trade-offs are in [ARCHITECTURE.md](ARCHITECTURE.md).
 Needs Docker Desktop and Python 3.11 (only to generate keys).
 
 ```bash
-git clone https://github.com/gagan-rohith/Sentinal-AI.git
-cd Sentinal-AI
+git clone https://github.com/gagan-rohith/sentinel-ai.git
+cd sentinel-ai
 cp .env.example .env
 python -m auth.api_keys operator     # prints a key and a config line
 python -m auth.api_keys admin
