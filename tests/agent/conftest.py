@@ -1,14 +1,21 @@
 import asyncio
 from collections import defaultdict, deque
+from collections.abc import Mapping
+from datetime import UTC, datetime
 from typing import Any, TypeVar
 
 import pytest
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.types import Command
 from pydantic import BaseModel
 
 from agents.llm import Usage
+from agents.schemas import ApprovalDecision
 from auth.permissions import AGENT_PRINCIPAL
+from core.enums import Role
 from core.exceptions import LLMUnavailableError
 from core.models import Incident
+from graph.checkpoint import serializer
 from graph.incident_graph import RECURSION_LIMIT, build_incident_graph
 from graph.state import AgentDeps, IncidentState, Stage
 from retrieval.hybrid_search import HybridSearcher
@@ -45,9 +52,35 @@ class ScriptedLLM:
         return item, Usage(input_tokens=100, output_tokens=20)
 
 
+class AllowAllApprovals:
+    """Approval verifier that accepts everything, to test execution in isolation."""
+
+    async def verify(self, approval_id: str, tool: str, arguments: Mapping[str, Any]) -> bool:
+        return True
+
+
+def decision(approved: bool, role: Role = Role.ADMIN) -> ApprovalDecision:
+    return ApprovalDecision(
+        approval_id="apr-test",
+        approved=approved,
+        decided_by=f"tester-{role.value}",
+        role=role,
+        comment=None if approved else "not during peak traffic",
+        decided_at=datetime(2026, 5, 1, tzinfo=UTC),
+    )
+
+
+REJECT = decision(approved=False)
+
+
 @pytest.fixture(scope="session")
 def registry(backend: SimulatedOpsBackend, searcher: HybridSearcher) -> ToolRegistry:
     return build_default_registry(backend, TicketStore(), searcher)
+
+
+@pytest.fixture(scope="session")
+def permissive_registry(backend: SimulatedOpsBackend, searcher: HybridSearcher) -> ToolRegistry:
+    return build_default_registry(backend, TicketStore(), searcher, approvals=AllowAllApprovals())
 
 
 @pytest.fixture
@@ -57,13 +90,22 @@ def heuristic_deps(registry: ToolRegistry) -> AgentDeps:
 
 @pytest.fixture(scope="session")
 def demo_state(registry: ToolRegistry, demo_incident: Incident) -> dict[str, Any]:
-    """Final state of a heuristic run on the demo incident, shared read-only by tests."""
+    """Final state of a heuristic run on the demo incident whose restart was rejected."""
     deps = AgentDeps(tools=registry, llm=None, principal=AGENT_PRINCIPAL)
     return asyncio.run(run_graph(deps, demo_incident))
 
 
-async def run_graph(deps: AgentDeps, incident: Incident) -> dict[str, Any]:
-    graph = build_incident_graph(deps)
+async def run_graph(
+    deps: AgentDeps,
+    incident: Incident,
+    resume_with: ApprovalDecision | None = REJECT,
+) -> dict[str, Any]:
+    """Run the graph; if it pauses for approval, resume with `resume_with` (None: stay paused)."""
+    graph = build_incident_graph(deps, InMemorySaver(serde=serializer()))
+    config: Any = {"configurable": {"thread_id": "run-test"}, "recursion_limit": RECURSION_LIMIT}
     initial: IncidentState = {"run_id": "run-test", "incident": incident, "stage": Stage.START}
-    result: dict[str, Any] = await graph.ainvoke(initial, {"recursion_limit": RECURSION_LIMIT})
-    return result
+    await graph.ainvoke(initial, config)
+    if resume_with is not None and (await graph.aget_state(config)).next:
+        await graph.ainvoke(Command(resume=resume_with.model_dump(mode="json")), config)
+    snapshot = await graph.aget_state(config)
+    return {**snapshot.values, "__next__": snapshot.next}

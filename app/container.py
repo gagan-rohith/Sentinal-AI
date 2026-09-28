@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import structlog
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from agents.llm import AnthropicLLM, StructuredLLM
 from app.config import Settings
@@ -8,12 +9,14 @@ from auth.api_keys import ApiKeyAuthenticator, parse_key_config
 from auth.permissions import AGENT_PRINCIPAL
 from core.exceptions import SearchUnavailableError
 from data.loader import load_incidents
+from graph.checkpoint import open_checkpointer
 from graph.runner import IncidentAnalyzer
 from graph.state import AgentDeps
 from retrieval.backend import SearchBackend
 from retrieval.factory import create_search_backend, embedder_from_settings, reranker_from_settings
 from retrieval.hybrid_search import HybridSearcher
 from retrieval.indexing import build_documents, ingest
+from storage.approvals import ApprovalStore
 from storage.db import Database
 from storage.incidents import IncidentRepository
 from storage.runs import RunRepository
@@ -37,6 +40,7 @@ class Container:
     tools: ToolRegistry
     api_keys: ApiKeyAuthenticator
     analyzer: IncidentAnalyzer
+    checkpointer: AsyncSqliteSaver
 
     @classmethod
     async def create(cls, settings: Settings) -> "Container":
@@ -53,8 +57,13 @@ class Container:
         if settings.auto_index:
             await _ensure_indexed(settings, search_backend, searcher, backend)
 
+        approvals = ApprovalStore(db)
         tools = build_default_registry(
-            backend, TicketStore(), searcher, timeout_s=settings.tool_timeout_seconds
+            backend,
+            TicketStore(),
+            searcher,
+            approvals=approvals,
+            timeout_s=settings.tool_timeout_seconds,
         )
         deps = AgentDeps(
             tools=tools,
@@ -62,6 +71,7 @@ class Container:
             principal=AGENT_PRINCIPAL,
             max_retries=settings.max_critic_retries,
         )
+        checkpointer = await open_checkpointer(settings.database_path)
         return cls(
             settings=settings,
             db=db,
@@ -71,12 +81,14 @@ class Container:
             searcher=searcher,
             tools=tools,
             api_keys=ApiKeyAuthenticator(parse_key_config(settings.api_keys)),
-            analyzer=IncidentAnalyzer(deps, RunRepository(db)),
+            analyzer=IncidentAnalyzer(deps, RunRepository(db), approvals, checkpointer),
+            checkpointer=checkpointer,
         )
 
     async def close(self) -> None:
         await self.analyzer.shutdown()
         await self.search_backend.close()
+        await self.checkpointer.conn.close()
         await self.db.close()
 
 

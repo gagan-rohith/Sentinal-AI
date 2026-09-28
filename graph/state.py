@@ -6,7 +6,10 @@ from agents.evidence import Evidence
 from agents.llm import StructuredLLM
 from agents.schemas import (
     AgentCall,
+    ApprovalDecision,
+    ApprovalRequest,
     CriticReview,
+    ExecutedAction,
     FinalReport,
     Hypothesis,
     RemediationPlan,
@@ -16,7 +19,6 @@ from auth.permissions import Principal
 from core.enums import ApprovalStatus
 from core.models import Incident, ServiceHealth
 from retrieval.models import SearchHit
-from tools.common import ActionResult
 from tools.deployments import DeploymentStatusResult, RecentDeploymentsResult
 from tools.logs import LogsResult
 from tools.metrics import MetricsResult
@@ -63,7 +65,9 @@ class IncidentState(TypedDict, total=False):
 
     approval_required: bool
     approval_status: ApprovalStatus
-    tool_execution_result: ActionResult
+    approval_request: ApprovalRequest
+    approval_decision: ApprovalDecision
+    tool_execution_result: list[ExecutedAction]
     final_report: FinalReport
 
     # Append-only across nodes.

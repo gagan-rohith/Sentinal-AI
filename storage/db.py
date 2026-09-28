@@ -29,6 +29,19 @@ CREATE TABLE IF NOT EXISTS runs (
     updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_runs_incident ON runs (incident_id);
+
+CREATE TABLE IF NOT EXISTS approvals (
+    approval_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL,
+    request TEXT NOT NULL,
+    requested_at TEXT NOT NULL,
+    decided_at TEXT,
+    decided_by TEXT,
+    decided_role TEXT,
+    comment TEXT,
+    consumed TEXT NOT NULL DEFAULT '[]'
+);
 """
 
 

@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from agents.evidence import Evidence
-from core.enums import ApprovalStatus, Severity
+from core.enums import ApprovalStatus, Role, Severity
 
 
 class Subsystem(StrEnum):
@@ -139,6 +139,44 @@ class TimelineEvent(BaseModel):
     source: str
 
 
+class ProposedAction(BaseModel):
+    tool: str
+    arguments: dict[str, str]
+    description: str
+    risk: Risk
+
+
+class ApprovalRequest(BaseModel):
+    """What a human sees before deciding whether a production change may run."""
+
+    run_id: str
+    incident_id: str
+    service: str
+    root_cause: str
+    root_cause_confidence: float
+    actions: list[ProposedAction]
+    overall_risk: Risk
+    rollback_plan: str
+    unresolved_critic_issues: list[str]
+
+
+class ApprovalDecision(BaseModel):
+    approval_id: str
+    approved: bool
+    decided_by: str
+    role: Role
+    comment: str | None = None
+    decided_at: datetime
+
+
+class ExecutedAction(BaseModel):
+    tool: str
+    arguments: dict[str, str]
+    status: Literal["succeeded", "failed"]
+    message: str
+    executed_at: datetime
+
+
 class AgentCall(BaseModel):
     agent: str
     mode: Literal["llm", "heuristic", "fallback"]
@@ -158,6 +196,8 @@ class FinalReport(BaseModel):
     hypotheses: list[Hypothesis]
     remediation_plan: RemediationPlan
     approval_status: ApprovalStatus
+    approval: ApprovalDecision | None
+    executed_actions: list[ExecutedAction]
     critic_review: CriticReview | None
     unresolved_critic_issues: bool
     retries: int

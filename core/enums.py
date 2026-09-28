@@ -68,6 +68,7 @@ class ApprovalStatus(StrEnum):
 class RunStatus(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
+    AWAITING_APPROVAL = "awaiting_approval"
     COMPLETED = "completed"
     FAILED = "failed"
 

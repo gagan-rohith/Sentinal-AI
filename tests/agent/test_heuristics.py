@@ -72,16 +72,22 @@ def test_runbooks_follow_selected_hypothesis(demo_state: dict[str, Any]) -> None
 def test_timeline_uses_recorded_timestamps(demo_state: dict[str, Any]) -> None:
     timeline = build_timeline(demo_state)  # type: ignore[arg-type]
     assert [e.timestamp for e in timeline] == sorted(e.timestamp for e in timeline)
-    assert timeline[-1].description.startswith("Alert fired")
+    descriptions = [e.description for e in timeline]
+    alert = next(i for i, d in enumerate(descriptions) if d.startswith("Alert fired"))
+    decision = next(i for i, d in enumerate(descriptions) if d.startswith("Remediation rejected"))
+    assert alert < decision
     assert any(e.description.startswith("First error observed") for e in timeline)
-    known = {e.id for e in demo_state["evidence"]} | {demo_state["incident"].incident_id}
+    known = {e.id for e in demo_state["evidence"]} | {
+        demo_state["incident"].incident_id,
+        demo_state["approval_decision"].approval_id,
+    }
     assert {e.source for e in timeline} <= known
 
 
 def test_final_report_for_demo(demo_state: dict[str, Any]) -> None:
     report = demo_state["final_report"]
     assert report.mode == "heuristic"
-    assert report.approval_status is ApprovalStatus.PENDING
+    assert report.approval_status is ApprovalStatus.REJECTED
     assert report.retries == 0
     assert not report.unresolved_critic_issues
     assert set(report.evidence_ids_cited) <= {e.id for e in report.evidence}

@@ -40,7 +40,37 @@ def build_timeline(state: IncidentState) -> list[TimelineEvent]:
             source=incident.incident_id,
         )
     )
+    decision = state.get("approval_decision")
+    if decision is not None:
+        verb = "approved" if decision.approved else "rejected"
+        note = f": {decision.comment}" if decision.comment else ""
+        events.append(
+            TimelineEvent(
+                timestamp=decision.decided_at,
+                description=f"Remediation {verb} by {decision.decided_by}{note}",
+                source=decision.approval_id,
+            )
+        )
+    for action in state.get("tool_execution_result", []):
+        events.append(
+            TimelineEvent(
+                timestamp=action.executed_at,
+                description=f"{action.tool} {action.status}: {action.message}",
+                source=decision.approval_id if decision else action.tool,
+            )
+        )
     return sorted(events, key=lambda e: e.timestamp)
+
+
+def _outcome(state: IncidentState) -> str:
+    decision = state.get("approval_decision")
+    if decision is None:
+        return "No production change needed approval."
+    if not decision.approved:
+        reason = f" ({decision.comment})" if decision.comment else ""
+        return f"Rejected by {decision.decided_by}{reason}; no actions were executed."
+    results = "; ".join(f"{a.tool} {a.status}" for a in state.get("tool_execution_result", []))
+    return f"Approved by {decision.decided_by}. Executed: {results or 'nothing'}."
 
 
 def heuristic_draft(state: IncidentState) -> PostmortemDraft:
@@ -70,7 +100,9 @@ def heuristic_draft(state: IncidentState) -> PostmortemDraft:
         root_cause=f"{selected.title}. {selected.description}",
         remediation=plan.summary
         + " Steps: "
-        + "; ".join(s.description for s in plan.steps if s.kind is not StepKind.PREVENTION),
+        + "; ".join(s.description for s in plan.steps if s.kind is not StepKind.PREVENTION)
+        + " "
+        + _outcome(state),
         prevention=[s.description for s in plan.steps if s.kind is StepKind.PREVENTION],
         open_questions=open_questions,
     )
@@ -86,6 +118,7 @@ def postmortem_prompt(state: IncidentState) -> str:
             "Critic review: "
             + (review.model_dump_json() if (review := state.get("critic_feedback")) else "none"),
             "Unresolved critic issues: " + str(bool(state.get("unresolved_critic_issues"))),
+            "Approval outcome: " + _outcome(state),
             "Data gaps: " + ("; ".join(state.get("data_gaps", [])) or "none"),
             "Evidence:\n" + render(state.get("evidence", [])),
         ]
@@ -112,8 +145,7 @@ async def postmortem_node(deps: AgentDeps, state: IncidentState) -> dict[str, An
     )
     plan = state["remediation_plan"]
     selected = state["selected_root_cause"]
-    # Phase 3 never executes actions: a plan that needs approval stays pending.
-    approval = ApprovalStatus.PENDING if plan.approval_required else ApprovalStatus.NOT_REQUIRED
+    approval = state.get("approval_status", ApprovalStatus.NOT_REQUIRED)
     cited = list(dict.fromkeys(selected.evidence_for + [e for s in plan.steps for e in s.evidence]))
     calls = [*state.get("agent_calls", []), call]
 
@@ -126,6 +158,8 @@ async def postmortem_node(deps: AgentDeps, state: IncidentState) -> dict[str, An
         hypotheses=state.get("root_cause_hypotheses", [selected]),
         remediation_plan=plan,
         approval_status=approval,
+        approval=state.get("approval_decision"),
+        executed_actions=list(state.get("tool_execution_result", [])),
         critic_review=state.get("critic_feedback"),
         unresolved_critic_issues=bool(state.get("unresolved_critic_issues")),
         retries=state.get("retry_count", 0),
