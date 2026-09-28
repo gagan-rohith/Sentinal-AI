@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from app.api import agents, health, incidents, tools
+from app.api import agents, evaluations, health, incidents, tools
 from app.config import Settings, get_settings
 from app.container import Container
 from core.exceptions import SentinelError
@@ -44,6 +44,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(incidents.router)
     app.include_router(tools.router)
     app.include_router(agents.router)
+    app.include_router(evaluations.router)
     return app
 
 

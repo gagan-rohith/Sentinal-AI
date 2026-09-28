@@ -17,7 +17,6 @@ from retrieval.hybrid_search import HybridSearcher
 from storage.approvals import ApprovalStore
 from storage.db import Database
 from storage.runs import RunRepository
-from tests.agent.conftest import REJECT
 from tools.backend import SimulatedOpsBackend
 from tools.tickets import TicketStore
 from tools.tool_registry import build_default_registry
@@ -216,12 +215,3 @@ async def test_shutdown_marks_running_runs_cancelled(
     cancelled = await analyzer.runs.get(run.run_id)
     assert cancelled.status is RunStatus.FAILED
     assert cancelled.error_code == "cancelled"
-
-
-async def test_synchronous_run_resumes_with_given_decision(
-    analyzer: IncidentAnalyzer, demo_incident: Incident
-) -> None:
-    paused = await analyzer.run(demo_incident, "run-sync-paused")
-    assert "final_report" not in paused
-    finished = await analyzer.run(demo_incident, "run-sync-done", decision=REJECT)
-    assert finished["final_report"].approval_status is ApprovalStatus.REJECTED

@@ -62,6 +62,7 @@ def settings(tmp_path: Path) -> Settings:
         api_keys=",".join(f"{role.value}:{hash_key(key)}" for role, key in KEYS.items()),
         search_backend="memory",
         embedding_provider="hash",
+        eval_reports_dir=tmp_path / "reports",
         _env_file=None,  # type: ignore[call-arg]
     )
 

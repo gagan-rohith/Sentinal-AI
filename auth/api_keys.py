@@ -30,10 +30,22 @@ def generate_key() -> str:
 def parse_key_config(config: str) -> dict[str, Role]:
     """Parse 'role:hash,role:hash' into {hash: role}."""
     keys: dict[str, Role] = {}
-    for entry in filter(None, (part.strip() for part in config.split(","))):
+    roles = ", ".join(r.value for r in Role)
+    for position, entry in enumerate(
+        filter(None, (part.strip() for part in config.split(","))), start=1
+    ):
+        # Error messages never include the entry itself: it may be a pasted secret.
+        if entry.startswith(KEY_PREFIX):
+            raise ValueError(
+                f"API_KEYS entry {position} is a plaintext key; use the 'config:' line "
+                "printed by python -m auth.api_keys, not the 'key:' line"
+            )
         role, sep, digest = entry.partition(":")
-        if not sep or len(digest) != 64:
-            raise ValueError(f"invalid API_KEYS entry for role '{role}'")
+        if not sep or len(digest) != 64 or role not in {r.value for r in Role}:
+            raise ValueError(
+                f"API_KEYS entry {position} is not in the form role:sha256 "
+                f"(role one of {roles}, then 64 hex characters)"
+            )
         keys[digest.lower()] = Role(role)
     return keys
 

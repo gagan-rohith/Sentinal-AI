@@ -1,0 +1,620 @@
+[
+  {
+    "incident_id": "INC-1001",
+    "service": "orders-service",
+    "category": "postgres_pool_exhaustion",
+    "relevant_runbook_ids": [
+      "postgres-connection-pool-exhaustion",
+      "api-5xx-spike"
+    ],
+    "expected_root_cause": "PostgreSQL connection pool exhaustion. The traffic surge from the flash sale saturated the fixed pool of 100 connections, slow queries held connections longer, and requests queued until they timed out and returned 5xx.",
+    "expected_remediation": "Raise the connection pool size within the database max_connections budget, put PgBouncer in front of PostgreSQL, terminate idle-in-transaction sessions, rate limit campaign traffic, and restart the service only if connections have leaked."
+  },
+  {
+    "incident_id": "INC-1002",
+    "service": "payments-service",
+    "category": "postgres_pool_exhaustion",
+    "relevant_runbook_ids": [
+      "postgres-connection-pool-exhaustion",
+      "api-5xx-spike"
+    ],
+    "expected_root_cause": "PostgreSQL connection pool exhaustion. The traffic surge from the flash sale saturated the fixed pool of 100 connections, slow queries held connections longer, and requests queued until they timed out and returned 5xx.",
+    "expected_remediation": "Raise the connection pool size within the database max_connections budget, put PgBouncer in front of PostgreSQL, terminate idle-in-transaction sessions, rate limit campaign traffic, and restart the service only if connections have leaked."
+  },
+  {
+    "incident_id": "INC-1003",
+    "service": "orders-service",
+    "category": "k8s_oom_killed",
+    "relevant_runbook_ids": [
+      "k8s-oom-killed"
+    ],
+    "expected_root_cause": "The container memory limit of 512Mi is too small after a release enlarged the in-process cache. Heap usage grows until the kernel OOM kills the container.",
+    "expected_remediation": "Raise the memory limit to 1Gi and cap the cache size through configuration. If that cannot be done quickly, roll back the release that enlarged the cache."
+  },
+  {
+    "incident_id": "INC-1004",
+    "service": "search-api",
+    "category": "k8s_oom_killed",
+    "relevant_runbook_ids": [
+      "k8s-oom-killed"
+    ],
+    "expected_root_cause": "The container memory limit of 512Mi is too small after a release enlarged the in-process cache. Heap usage grows until the kernel OOM kills the container.",
+    "expected_remediation": "Raise the memory limit to 1Gi and cap the cache size through configuration. If that cannot be done quickly, roll back the release that enlarged the cache."
+  },
+  {
+    "incident_id": "INC-1005",
+    "service": "analytics-consumer",
+    "category": "k8s_oom_killed",
+    "relevant_runbook_ids": [
+      "k8s-oom-killed"
+    ],
+    "expected_root_cause": "The container memory limit of 512Mi is too small after a release enlarged the in-process cache. Heap usage grows until the kernel OOM kills the container.",
+    "expected_remediation": "Raise the memory limit to 1Gi and cap the cache size through configuration. If that cannot be done quickly, roll back the release that enlarged the cache."
+  },
+  {
+    "incident_id": "INC-1006",
+    "service": "analytics-consumer",
+    "category": "kafka_consumer_lag",
+    "relevant_runbook_ids": [
+      "kafka-consumer-lag"
+    ],
+    "expected_root_cause": "The consumer group is stuck in a rebalance loop. Raising max.poll.records to 5000 made each batch take longer than max.poll.interval.ms, so consumers are evicted from the group before they commit offsets.",
+    "expected_remediation": "Revert max.poll.records to 500 or raise max.poll.interval.ms above the worst batch time, then scale consumers to the partition count to drain the backlog."
+  },
+  {
+    "incident_id": "INC-1007",
+    "service": "notification-worker",
+    "category": "kafka_consumer_lag",
+    "relevant_runbook_ids": [
+      "kafka-consumer-lag"
+    ],
+    "expected_root_cause": "The consumer group is stuck in a rebalance loop. Raising max.poll.records to 5000 made each batch take longer than max.poll.interval.ms, so consumers are evicted from the group before they commit offsets.",
+    "expected_remediation": "Revert max.poll.records to 500 or raise max.poll.interval.ms above the worst batch time, then scale consumers to the partition count to drain the backlog."
+  },
+  {
+    "incident_id": "INC-1008",
+    "service": "billing-service",
+    "category": "kafka_consumer_lag",
+    "relevant_runbook_ids": [
+      "kafka-consumer-lag"
+    ],
+    "expected_root_cause": "The consumer group is stuck in a rebalance loop. Raising max.poll.records to 5000 made each batch take longer than max.poll.interval.ms, so consumers are evicted from the group before they commit offsets.",
+    "expected_remediation": "Revert max.poll.records to 500 or raise max.poll.interval.ms above the worst batch time, then scale consumers to the partition count to drain the backlog."
+  },
+  {
+    "incident_id": "INC-1009",
+    "service": "payments-service",
+    "category": "bad_deployment",
+    "relevant_runbook_ids": [
+      "api-5xx-spike",
+      "deployment-rollback"
+    ],
+    "expected_root_cause": "The latest deployment introduced a regression in the address response serializer. Records without an optional field throw a NullPointerException and return 500.",
+    "expected_remediation": "Roll back to the previous version, then add a regression test for addresses without the optional field before redeploying."
+  },
+  {
+    "incident_id": "INC-1010",
+    "service": "user-profile-service",
+    "category": "bad_deployment",
+    "relevant_runbook_ids": [
+      "api-5xx-spike",
+      "deployment-rollback"
+    ],
+    "expected_root_cause": "The latest deployment introduced a regression in the address response serializer. Records without an optional field throw a NullPointerException and return 500.",
+    "expected_remediation": "Roll back to the previous version, then add a regression test for addresses without the optional field before redeploying."
+  },
+  {
+    "incident_id": "INC-1011",
+    "service": "shipping-service",
+    "category": "bad_deployment",
+    "relevant_runbook_ids": [
+      "api-5xx-spike",
+      "deployment-rollback"
+    ],
+    "expected_root_cause": "The latest deployment introduced a regression in the address response serializer. Records without an optional field throw a NullPointerException and return 500.",
+    "expected_remediation": "Roll back to the previous version, then add a regression test for addresses without the optional field before redeploying."
+  },
+  {
+    "incident_id": "INC-1012",
+    "service": "api-gateway",
+    "category": "dns_resolution_failure",
+    "relevant_runbook_ids": [
+      "dns-resolution-failure"
+    ],
+    "expected_root_cause": "CoreDNS was left with a single replica after a node pool rotation. With ndots:5 search path expansion each lookup produces several queries, and the single replica is overloaded and drops requests.",
+    "expected_remediation": "Scale CoreDNS back to at least 3 replicas, add a PodDisruptionBudget, enable NodeLocal DNSCache, and lower ndots for services that call external names."
+  },
+  {
+    "incident_id": "INC-1013",
+    "service": "notification-worker",
+    "category": "dns_resolution_failure",
+    "relevant_runbook_ids": [
+      "dns-resolution-failure"
+    ],
+    "expected_root_cause": "CoreDNS was left with a single replica after a node pool rotation. With ndots:5 search path expansion each lookup produces several queries, and the single replica is overloaded and drops requests.",
+    "expected_remediation": "Scale CoreDNS back to at least 3 replicas, add a PodDisruptionBudget, enable NodeLocal DNSCache, and lower ndots for services that call external names."
+  },
+  {
+    "incident_id": "INC-1014",
+    "service": "inventory-service",
+    "category": "dns_resolution_failure",
+    "relevant_runbook_ids": [
+      "dns-resolution-failure"
+    ],
+    "expected_root_cause": "CoreDNS was left with a single replica after a node pool rotation. With ndots:5 search path expansion each lookup produces several queries, and the single replica is overloaded and drops requests.",
+    "expected_remediation": "Scale CoreDNS back to at least 3 replicas, add a PodDisruptionBudget, enable NodeLocal DNSCache, and lower ndots for services that call external names."
+  },
+  {
+    "incident_id": "INC-1015",
+    "service": "api-gateway",
+    "category": "tls_certificate_expired",
+    "relevant_runbook_ids": [
+      "tls-certificate-expiration"
+    ],
+    "expected_root_cause": "The TLS certificate for api-gateway expired because cert-manager could not renew it. The ACME DNS-01 challenge has been failing since the DNS provider credentials were revoked.",
+    "expected_remediation": "Issue and install a replacement certificate, restore the DNS provider credentials used by cert-manager, and alert on certificates expiring within 21 days."
+  },
+  {
+    "incident_id": "INC-1016",
+    "service": "payments-service",
+    "category": "tls_certificate_expired",
+    "relevant_runbook_ids": [
+      "tls-certificate-expiration"
+    ],
+    "expected_root_cause": "The TLS certificate for payments-service expired because cert-manager could not renew it. The ACME DNS-01 challenge has been failing since the DNS provider credentials were revoked.",
+    "expected_remediation": "Issue and install a replacement certificate, restore the DNS provider credentials used by cert-manager, and alert on certificates expiring within 21 days."
+  },
+  {
+    "incident_id": "INC-1017",
+    "service": "auth-service",
+    "category": "tls_certificate_expired",
+    "relevant_runbook_ids": [
+      "tls-certificate-expiration"
+    ],
+    "expected_root_cause": "The TLS certificate for auth-service expired because cert-manager could not renew it. The ACME DNS-01 challenge has been failing since the DNS provider credentials were revoked.",
+    "expected_remediation": "Issue and install a replacement certificate, restore the DNS provider credentials used by cert-manager, and alert on certificates expiring within 21 days."
+  },
+  {
+    "incident_id": "INC-1018",
+    "service": "auth-service",
+    "category": "jwt_auth_failure",
+    "relevant_runbook_ids": [
+      "jwt-authentication-failure"
+    ],
+    "expected_root_cause": "The identity provider rotated its JWT signing key, but auth-service caches the JWKS for 24 hours and does not refetch when it sees an unknown key id, so tokens signed with the new key are rejected.",
+    "expected_remediation": "Force a JWKS refresh by restarting or reloading the service, change the verifier to refetch JWKS on unknown kid, and publish new keys before they are used for signing."
+  },
+  {
+    "incident_id": "INC-1019",
+    "service": "user-profile-service",
+    "category": "jwt_auth_failure",
+    "relevant_runbook_ids": [
+      "jwt-authentication-failure"
+    ],
+    "expected_root_cause": "The identity provider rotated its JWT signing key, but user-profile-service caches the JWKS for 24 hours and does not refetch when it sees an unknown key id, so tokens signed with the new key are rejected.",
+    "expected_remediation": "Force a JWKS refresh by restarting or reloading the service, change the verifier to refetch JWKS on unknown kid, and publish new keys before they are used for signing."
+  },
+  {
+    "incident_id": "INC-1020",
+    "service": "checkout-api",
+    "category": "jwt_auth_failure",
+    "relevant_runbook_ids": [
+      "jwt-authentication-failure"
+    ],
+    "expected_root_cause": "The identity provider rotated its JWT signing key, but checkout-api caches the JWKS for 24 hours and does not refetch when it sees an unknown key id, so tokens signed with the new key are rejected.",
+    "expected_remediation": "Force a JWKS refresh by restarting or reloading the service, change the verifier to refetch JWKS on unknown kid, and publish new keys before they are used for signing."
+  },
+  {
+    "incident_id": "INC-1021",
+    "service": "search-api",
+    "category": "redis_memory_eviction",
+    "relevant_runbook_ids": [
+      "redis-memory-pressure"
+    ],
+    "expected_root_cause": "Redis reached maxmemory because a release started writing session keys without a TTL. The allkeys-lru policy evicts hot cache entries instead, so the hit ratio collapsed and requests fell through to the database.",
+    "expected_remediation": "Set a TTL on session keys and expire the existing ones, move sessions to a separate Redis instance, and alert on memory above 85% of maxmemory."
+  },
+  {
+    "incident_id": "INC-1022",
+    "service": "checkout-api",
+    "category": "redis_memory_eviction",
+    "relevant_runbook_ids": [
+      "redis-memory-pressure"
+    ],
+    "expected_root_cause": "Redis reached maxmemory because a release started writing session keys without a TTL. The allkeys-lru policy evicts hot cache entries instead, so the hit ratio collapsed and requests fell through to the database.",
+    "expected_remediation": "Set a TTL on session keys and expire the existing ones, move sessions to a separate Redis instance, and alert on memory above 85% of maxmemory."
+  },
+  {
+    "incident_id": "INC-1023",
+    "service": "user-profile-service",
+    "category": "redis_memory_eviction",
+    "relevant_runbook_ids": [
+      "redis-memory-pressure"
+    ],
+    "expected_root_cause": "Redis reached maxmemory because a release started writing session keys without a TTL. The allkeys-lru policy evicts hot cache entries instead, so the hit ratio collapsed and requests fell through to the database.",
+    "expected_remediation": "Set a TTL on session keys and expire the existing ones, move sessions to a separate Redis instance, and alert on memory above 85% of maxmemory."
+  },
+  {
+    "incident_id": "INC-1024",
+    "service": "search-api",
+    "category": "cpu_throttling",
+    "relevant_runbook_ids": [
+      "cpu-throttling"
+    ],
+    "expected_root_cause": "The CPU limit was cut to 500m. Request handling is bursty, so containers use their CFS quota early in each period and are throttled, which inflates latency even though average utilization looks moderate.",
+    "expected_remediation": "Restore the CPU limit to 2 cores or remove the limit while keeping the request, and alert on container_cpu_cfs_throttled_periods_total."
+  },
+  {
+    "incident_id": "INC-1025",
+    "service": "orders-service",
+    "category": "cpu_throttling",
+    "relevant_runbook_ids": [
+      "cpu-throttling"
+    ],
+    "expected_root_cause": "The CPU limit was cut to 500m. Request handling is bursty, so containers use their CFS quota early in each period and are throttled, which inflates latency even though average utilization looks moderate.",
+    "expected_remediation": "Restore the CPU limit to 2 cores or remove the limit while keeping the request, and alert on container_cpu_cfs_throttled_periods_total."
+  },
+  {
+    "incident_id": "INC-1026",
+    "service": "inventory-service",
+    "category": "cpu_throttling",
+    "relevant_runbook_ids": [
+      "cpu-throttling"
+    ],
+    "expected_root_cause": "The CPU limit was cut to 500m. Request handling is bursty, so containers use their CFS quota early in each period and are throttled, which inflates latency even though average utilization looks moderate.",
+    "expected_remediation": "Restore the CPU limit to 2 cores or remove the limit while keeping the request, and alert on container_cpu_cfs_throttled_periods_total."
+  },
+  {
+    "incident_id": "INC-1027",
+    "service": "analytics-consumer",
+    "category": "disk_pressure",
+    "relevant_runbook_ids": [
+      "disk-pressure"
+    ],
+    "expected_root_cause": "Debug logging was left enabled after an investigation. The service wrote full request payloads to local log files, filled the node's ephemeral storage and triggered kubelet evictions.",
+    "expected_remediation": "Set LOG_LEVEL back to INFO, clear the oversized log files, set ephemeral-storage requests and limits, and log to stdout with rotation."
+  },
+  {
+    "incident_id": "INC-1028",
+    "service": "billing-service",
+    "category": "disk_pressure",
+    "relevant_runbook_ids": [
+      "disk-pressure"
+    ],
+    "expected_root_cause": "Debug logging was left enabled after an investigation. The service wrote full request payloads to local log files, filled the node's ephemeral storage and triggered kubelet evictions.",
+    "expected_remediation": "Set LOG_LEVEL back to INFO, clear the oversized log files, set ephemeral-storage requests and limits, and log to stdout with rotation."
+  },
+  {
+    "incident_id": "INC-1029",
+    "service": "search-api",
+    "category": "disk_pressure",
+    "relevant_runbook_ids": [
+      "disk-pressure"
+    ],
+    "expected_root_cause": "Debug logging was left enabled after an investigation. The service wrote full request payloads to local log files, filled the node's ephemeral storage and triggered kubelet evictions.",
+    "expected_remediation": "Set LOG_LEVEL back to INFO, clear the oversized log files, set ephemeral-storage requests and limits, and log to stdout with rotation."
+  },
+  {
+    "incident_id": "INC-1030",
+    "service": "shipping-service",
+    "category": "dependency_timeout",
+    "relevant_runbook_ids": [
+      "dependency-timeout",
+      "latency-spike"
+    ],
+    "expected_root_cause": "The third party shipping rates provider degraded to over 10 seconds p99. The service had no tight timeout or fallback, so request threads blocked on the provider and latency cascaded to callers.",
+    "expected_remediation": "Cut the provider timeout to 2 seconds, serve cached rates as a fallback, tune the circuit breaker, and open a ticket with the provider."
+  },
+  {
+    "incident_id": "INC-1031",
+    "service": "checkout-api",
+    "category": "dependency_timeout",
+    "relevant_runbook_ids": [
+      "dependency-timeout",
+      "latency-spike"
+    ],
+    "expected_root_cause": "The third party shipping rates provider degraded to over 10 seconds p99. The service had no tight timeout or fallback, so request threads blocked on the provider and latency cascaded to callers.",
+    "expected_remediation": "Cut the provider timeout to 2 seconds, serve cached rates as a fallback, tune the circuit breaker, and open a ticket with the provider."
+  },
+  {
+    "incident_id": "INC-1032",
+    "service": "orders-service",
+    "category": "dependency_timeout",
+    "relevant_runbook_ids": [
+      "dependency-timeout",
+      "latency-spike"
+    ],
+    "expected_root_cause": "The third party shipping rates provider degraded to over 10 seconds p99. The service had no tight timeout or fallback, so request threads blocked on the provider and latency cascaded to callers.",
+    "expected_remediation": "Cut the provider timeout to 2 seconds, serve cached rates as a fallback, tune the circuit breaker, and open a ticket with the provider."
+  },
+  {
+    "incident_id": "INC-1033",
+    "service": "search-api",
+    "category": "slow_query_latency",
+    "relevant_runbook_ids": [
+      "latency-spike"
+    ],
+    "expected_root_cause": "The new region filter queries products.region, which has no index, so every listing request runs a sequential scan over a 40M row table.",
+    "expected_remediation": "Create an index on products.region with CREATE INDEX CONCURRENTLY, or disable the region filter until the index exists. Add EXPLAIN checks to query reviews."
+  },
+  {
+    "incident_id": "INC-1034",
+    "service": "inventory-service",
+    "category": "slow_query_latency",
+    "relevant_runbook_ids": [
+      "latency-spike"
+    ],
+    "expected_root_cause": "The new region filter queries products.region, which has no index, so every listing request runs a sequential scan over a 40M row table.",
+    "expected_remediation": "Create an index on products.region with CREATE INDEX CONCURRENTLY, or disable the region filter until the index exists. Add EXPLAIN checks to query reviews."
+  },
+  {
+    "incident_id": "INC-1035",
+    "service": "user-profile-service",
+    "category": "slow_query_latency",
+    "relevant_runbook_ids": [
+      "latency-spike"
+    ],
+    "expected_root_cause": "The new region filter queries products.region, which has no index, so every listing request runs a sequential scan over a 40M row table.",
+    "expected_remediation": "Create an index on products.region with CREATE INDEX CONCURRENTLY, or disable the region filter until the index exists. Add EXPLAIN checks to query reviews."
+  },
+  {
+    "incident_id": "INC-1036",
+    "service": "billing-service",
+    "category": "failed_db_migration",
+    "relevant_runbook_ids": [
+      "database-migration-failure",
+      "deployment-rollback"
+    ],
+    "expected_root_cause": "Schema migration 0042 failed on a lock timeout, but the deploy pipeline did not gate on migration success. The new version expects the discount_code column, which does not exist.",
+    "expected_remediation": "Roll back the application to the previous version, rerun migration 0042 with a lock_timeout during low traffic, and make the pipeline block rollout when a migration fails."
+  },
+  {
+    "incident_id": "INC-1037",
+    "service": "orders-service",
+    "category": "failed_db_migration",
+    "relevant_runbook_ids": [
+      "database-migration-failure",
+      "deployment-rollback"
+    ],
+    "expected_root_cause": "Schema migration 0042 failed on a lock timeout, but the deploy pipeline did not gate on migration success. The new version expects the discount_code column, which does not exist.",
+    "expected_remediation": "Roll back the application to the previous version, rerun migration 0042 with a lock_timeout during low traffic, and make the pipeline block rollout when a migration fails."
+  },
+  {
+    "incident_id": "INC-1038",
+    "service": "user-profile-service",
+    "category": "failed_db_migration",
+    "relevant_runbook_ids": [
+      "database-migration-failure",
+      "deployment-rollback"
+    ],
+    "expected_root_cause": "Schema migration 0042 failed on a lock timeout, but the deploy pipeline did not gate on migration success. The new version expects the discount_code column, which does not exist.",
+    "expected_remediation": "Roll back the application to the previous version, rerun migration 0042 with a lock_timeout during low traffic, and make the pipeline block rollout when a migration fails."
+  },
+  {
+    "incident_id": "INC-1039",
+    "service": "checkout-api",
+    "category": "broken_feature_flag",
+    "relevant_runbook_ids": [
+      "feature-flag-rollback",
+      "api-5xx-spike"
+    ],
+    "expected_root_cause": "Ramping new-pricing-engine to 100% exposed a code path that has no rounding configuration for non-USD currencies, so those requests fail.",
+    "expected_remediation": "Turn the new-pricing-engine flag off, add the missing currency rounding configuration, and ramp again gradually with error rate guards."
+  },
+  {
+    "incident_id": "INC-1040",
+    "service": "search-api",
+    "category": "broken_feature_flag",
+    "relevant_runbook_ids": [
+      "feature-flag-rollback",
+      "api-5xx-spike"
+    ],
+    "expected_root_cause": "Ramping new-pricing-engine to 100% exposed a code path that has no rounding configuration for non-USD currencies, so those requests fail.",
+    "expected_remediation": "Turn the new-pricing-engine flag off, add the missing currency rounding configuration, and ramp again gradually with error rate guards."
+  },
+  {
+    "incident_id": "INC-1041",
+    "service": "payments-service",
+    "category": "broken_feature_flag",
+    "relevant_runbook_ids": [
+      "feature-flag-rollback",
+      "api-5xx-spike"
+    ],
+    "expected_root_cause": "Ramping new-pricing-engine to 100% exposed a code path that has no rounding configuration for non-USD currencies, so those requests fail.",
+    "expected_remediation": "Turn the new-pricing-engine flag off, add the missing currency rounding configuration, and ramp again gradually with error rate guards."
+  },
+  {
+    "incident_id": "INC-1042",
+    "service": "api-gateway",
+    "category": "load_balancer_misconfiguration",
+    "relevant_runbook_ids": [
+      "load-balancer-misconfiguration"
+    ],
+    "expected_root_cause": "A Terraform change set the target group health check path to /healthz, but the service serves /health. Every target fails its health check and the load balancer has nothing to route to.",
+    "expected_remediation": "Revert the health check path to /health through Terraform and add a plan check that validates health check paths against the service."
+  },
+  {
+    "incident_id": "INC-1043",
+    "service": "checkout-api",
+    "category": "load_balancer_misconfiguration",
+    "relevant_runbook_ids": [
+      "load-balancer-misconfiguration"
+    ],
+    "expected_root_cause": "A Terraform change set the target group health check path to /healthz, but the service serves /health. Every target fails its health check and the load balancer has nothing to route to.",
+    "expected_remediation": "Revert the health check path to /health through Terraform and add a plan check that validates health check paths against the service."
+  },
+  {
+    "incident_id": "INC-1044",
+    "service": "search-api",
+    "category": "load_balancer_misconfiguration",
+    "relevant_runbook_ids": [
+      "load-balancer-misconfiguration"
+    ],
+    "expected_root_cause": "A Terraform change set the target group health check path to /healthz, but the service serves /health. Every target fails its health check and the load balancer has nothing to route to.",
+    "expected_remediation": "Revert the health check path to /health through Terraform and add a plan check that validates health check paths against the service."
+  },
+  {
+    "incident_id": "INC-1045",
+    "service": "payments-service",
+    "category": "secret_rotation_failure",
+    "relevant_runbook_ids": [
+      "secret-rotation-failure"
+    ],
+    "expected_root_cause": "Secrets Manager rotated the database password, but payments-service reads credentials only at startup. New connections still use the old password and fail.",
+    "expected_remediation": "Do a rolling restart of payments-service so it loads the new secret, then add secret reloading or a dual-credential rotation strategy."
+  },
+  {
+    "incident_id": "INC-1046",
+    "service": "billing-service",
+    "category": "secret_rotation_failure",
+    "relevant_runbook_ids": [
+      "secret-rotation-failure"
+    ],
+    "expected_root_cause": "Secrets Manager rotated the database password, but billing-service reads credentials only at startup. New connections still use the old password and fail.",
+    "expected_remediation": "Do a rolling restart of billing-service so it loads the new secret, then add secret reloading or a dual-credential rotation strategy."
+  },
+  {
+    "incident_id": "INC-1047",
+    "service": "notification-worker",
+    "category": "secret_rotation_failure",
+    "relevant_runbook_ids": [
+      "secret-rotation-failure"
+    ],
+    "expected_root_cause": "Secrets Manager rotated the database password, but notification-worker reads credentials only at startup. New connections still use the old password and fail.",
+    "expected_remediation": "Do a rolling restart of notification-worker so it loads the new secret, then add secret reloading or a dual-credential rotation strategy."
+  },
+  {
+    "incident_id": "INC-1048",
+    "service": "notification-worker",
+    "category": "iam_permission_regression",
+    "relevant_runbook_ids": [
+      "iam-permission-issue"
+    ],
+    "expected_root_cause": "An IAM Terraform refactor dropped the s3:PutObject statement from the notification-worker role, so every upload is denied.",
+    "expected_remediation": "Restore the s3:PutObject statement on the role, reapply Terraform, and add policy tests or IAM Access Analyzer checks to the pipeline."
+  },
+  {
+    "incident_id": "INC-1049",
+    "service": "analytics-consumer",
+    "category": "iam_permission_regression",
+    "relevant_runbook_ids": [
+      "iam-permission-issue"
+    ],
+    "expected_root_cause": "An IAM Terraform refactor dropped the s3:PutObject statement from the analytics-consumer role, so every upload is denied.",
+    "expected_remediation": "Restore the s3:PutObject statement on the role, reapply Terraform, and add policy tests or IAM Access Analyzer checks to the pipeline."
+  },
+  {
+    "incident_id": "INC-1050",
+    "service": "billing-service",
+    "category": "iam_permission_regression",
+    "relevant_runbook_ids": [
+      "iam-permission-issue"
+    ],
+    "expected_root_cause": "An IAM Terraform refactor dropped the s3:PutObject statement from the billing-service role, so every upload is denied.",
+    "expected_remediation": "Restore the s3:PutObject statement on the role, reapply Terraform, and add policy tests or IAM Access Analyzer checks to the pipeline."
+  },
+  {
+    "incident_id": "INC-1051",
+    "service": "notification-worker",
+    "category": "queue_backlog",
+    "relevant_runbook_ids": [
+      "queue-backlog"
+    ],
+    "expected_root_cause": "A malformed poison message fails processing and is redelivered forever. The queue has no dead letter queue, so it blocks the workers and the backlog grows.",
+    "expected_remediation": "Move the poison message aside, configure a dead letter queue with maxReceiveCount of 5, and make the worker skip unparseable payloads."
+  },
+  {
+    "incident_id": "INC-1052",
+    "service": "shipping-service",
+    "category": "queue_backlog",
+    "relevant_runbook_ids": [
+      "queue-backlog"
+    ],
+    "expected_root_cause": "A malformed poison message fails processing and is redelivered forever. The queue has no dead letter queue, so it blocks the workers and the backlog grows.",
+    "expected_remediation": "Move the poison message aside, configure a dead letter queue with maxReceiveCount of 5, and make the worker skip unparseable payloads."
+  },
+  {
+    "incident_id": "INC-1053",
+    "service": "billing-service",
+    "category": "queue_backlog",
+    "relevant_runbook_ids": [
+      "queue-backlog"
+    ],
+    "expected_root_cause": "A malformed poison message fails processing and is redelivered forever. The queue has no dead letter queue, so it blocks the workers and the backlog grows.",
+    "expected_remediation": "Move the poison message aside, configure a dead letter queue with maxReceiveCount of 5, and make the worker skip unparseable payloads."
+  },
+  {
+    "incident_id": "INC-1054",
+    "service": "inventory-service",
+    "category": "container_crash_loop",
+    "relevant_runbook_ids": [
+      "container-crash-loop"
+    ],
+    "expected_root_cause": "A ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL. The service requires DATABASE_URL, so new containers panic on startup and crash loop.",
+    "expected_remediation": "Restore the DATABASE_URL key in the ConfigMap and restart the rollout, then validate required keys in CI."
+  },
+  {
+    "incident_id": "INC-1055",
+    "service": "auth-service",
+    "category": "container_crash_loop",
+    "relevant_runbook_ids": [
+      "container-crash-loop"
+    ],
+    "expected_root_cause": "A ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL. The service requires DATABASE_URL, so new containers panic on startup and crash loop.",
+    "expected_remediation": "Restore the DATABASE_URL key in the ConfigMap and restart the rollout, then validate required keys in CI."
+  },
+  {
+    "incident_id": "INC-1056",
+    "service": "shipping-service",
+    "category": "container_crash_loop",
+    "relevant_runbook_ids": [
+      "container-crash-loop"
+    ],
+    "expected_root_cause": "A ConfigMap cleanup renamed DATABASE_URL to DB_CONNECTION_URL. The service requires DATABASE_URL, so new containers panic on startup and crash loop.",
+    "expected_remediation": "Restore the DATABASE_URL key in the ConfigMap and restart the rollout, then validate required keys in CI."
+  },
+  {
+    "incident_id": "INC-1057",
+    "service": "checkout-api",
+    "category": "autoscaling_misconfiguration",
+    "relevant_runbook_ids": [
+      "autoscaling-misconfiguration",
+      "latency-spike"
+    ],
+    "expected_root_cause": "HPA maxReplicas was lowered from 20 to 4, so checkout-api could not scale out for peak traffic. Pods saturate on CPU and latency climbs.",
+    "expected_remediation": "Restore maxReplicas to 20, and alert when an HPA sits at maxReplicas for more than 10 minutes."
+  },
+  {
+    "incident_id": "INC-1058",
+    "service": "search-api",
+    "category": "autoscaling_misconfiguration",
+    "relevant_runbook_ids": [
+      "autoscaling-misconfiguration",
+      "latency-spike"
+    ],
+    "expected_root_cause": "HPA maxReplicas was lowered from 20 to 4, so search-api could not scale out for peak traffic. Pods saturate on CPU and latency climbs.",
+    "expected_remediation": "Restore maxReplicas to 20, and alert when an HPA sits at maxReplicas for more than 10 minutes."
+  },
+  {
+    "incident_id": "INC-1059",
+    "service": "api-gateway",
+    "category": "autoscaling_misconfiguration",
+    "relevant_runbook_ids": [
+      "autoscaling-misconfiguration",
+      "latency-spike"
+    ],
+    "expected_root_cause": "HPA maxReplicas was lowered from 20 to 4, so api-gateway could not scale out for peak traffic. Pods saturate on CPU and latency climbs.",
+    "expected_remediation": "Restore maxReplicas to 20, and alert when an HPA sits at maxReplicas for more than 10 minutes."
+  },
+  {
+    "incident_id": "INC-1060",
+    "service": "checkout-api",
+    "category": "postgres_pool_exhaustion",
+    "relevant_runbook_ids": [
+      "postgres-connection-pool-exhaustion",
+      "api-5xx-spike"
+    ],
+    "expected_root_cause": "PostgreSQL connection pool exhaustion. The traffic surge from the flash sale saturated the fixed pool of 100 connections, slow queries held connections longer, and requests queued until they timed out and returned 5xx.",
+    "expected_remediation": "Raise the connection pool size within the database max_connections budget, put PgBouncer in front of PostgreSQL, terminate idle-in-transaction sessions, rate limit campaign traffic, and restart the service only if connections have leaked."
+  }
+]

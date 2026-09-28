@@ -42,6 +42,9 @@ class IncidentState(TypedDict, total=False):
     trace_id: str
     incident: Incident
     stage: str
+    # Evaluation only: past incidents hidden from similar-incident search, used by the
+    # leave-category-out benchmark. Never set on normal runs.
+    holdout_incident_ids: list[str]
 
     triage_summary: TriageSummary
     service_health: ServiceHealth

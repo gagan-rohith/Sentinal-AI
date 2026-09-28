@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = Field(default=60.0, gt=0)
     max_critic_retries: int = Field(default=3, ge=0, le=10)
 
+    eval_reports_dir: Path = Path("evals/reports")
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

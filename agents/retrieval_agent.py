@@ -97,7 +97,11 @@ async def retrieval_node(deps: AgentDeps, state: IncidentState) -> dict[str, Any
     similar = await try_tool(
         deps,
         "search_similar_incidents",
-        {"query": similar_query, "top_k": top_k, "exclude_incident_ids": [incident.incident_id]},
+        {
+            "query": similar_query,
+            "top_k": top_k,
+            "exclude_incident_ids": [incident.incident_id, *state.get("holdout_incident_ids", [])],
+        },
         SearchResults,
         calls,
         gaps,

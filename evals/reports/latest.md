@@ -1,0 +1,88 @@
+# SentinelAI benchmark
+
+Generated 2026-09-28 06:32 UTC in 41s at commit `2401768`.
+
+| Setting | Value |
+|---|---|
+| Agents | heuristic |
+| Search backend | elasticsearch |
+| Embeddings | `sentence-transformers/all-MiniLM-L6-v2` |
+| Incident cases | 60 |
+| QA queries | 42 |
+
+> These numbers come from the deterministic heuristic agents, not from an LLM.
+
+## Retrieval
+
+Runbook retrieval, top 5 after collapsing sections into their runbook.
+
+| Mode | Queries | Recall@1 | Recall@3 | Recall@5 | Precision@3 | MRR | Similar incident hit@3 |
+|---|---|---|---|---|---|---|---|
+| bm25 | incident (60) | 85.0% | 100.0% | 100.0% | 43.3% | 1.000 | 100.0% |
+| bm25 | QA (42) | 71.4% | 91.7% | 91.7% | 30.9% | 0.818 |  |
+| vector | incident (60) | 78.3% | 98.3% | 98.3% | 42.2% | 0.958 | 100.0% |
+| vector | QA (42) | 79.8% | 97.6% | 97.6% | 33.3% | 0.885 |  |
+| hybrid | incident (60) | 85.0% | 100.0% | 100.0% | 43.3% | 1.000 | 100.0% |
+| hybrid | QA (42) | 91.7% | 96.4% | 97.6% | 32.5% | 0.952 |  |
+
+## Agents
+
+- **standard**: the incident itself is hidden from similar-incident search.
+- **holdout**: every past incident with the same root cause category is hidden too, so the agents cannot copy a matching precedent.
+
+| Metric | standard | holdout |
+|---|---|---|
+| Cases | 60 | 60 |
+| Errors | 0 | 0 |
+| Runbook accuracy | 100.0% | 41.7% |
+| Category accuracy | 100.0% | 0.0% |
+| Semantic match rate | 100.0% | 0.0% |
+| Mean semantic similarity | 0.905 | 0.343 |
+| Mean confidence | 0.66 | 0.42 |
+| Brier score (lower is better) | 0.127 | 0.252 |
+| Expected calibration error | 0.343 | 0.107 |
+| Citation validity | 100.0% | 100.0% |
+| Unsupported claim rate | 0.0% | 0.0% |
+| Correct runbook cited | 100.0% | 51.7% |
+| Approval required | 20.0% | 26.7% |
+| Runs with critic retries | 0.0% | 21.7% |
+| Mean tool calls | 10.3 | 12.0 |
+| Latency mean / p95 (ms) | 144 / 155 | 185 / 277 |
+| LLM calls / fallbacks | 0 / 0 | 0 / 0 |
+| Tokens in / out | 0 / 0 | 0 / 0 |
+| Estimated cost (USD) | 0.00 | 0.00 |
+
+### Runbook accuracy by category
+
+| Category | standard | holdout |
+|---|---|---|
+| autoscaling_misconfiguration | 100.0% | 33.3% |
+| bad_deployment | 100.0% | 0.0% |
+| broken_feature_flag | 100.0% | 33.3% |
+| container_crash_loop | 100.0% | 0.0% |
+| cpu_throttling | 100.0% | 0.0% |
+| dependency_timeout | 100.0% | 33.3% |
+| disk_pressure | 100.0% | 100.0% |
+| dns_resolution_failure | 100.0% | 100.0% |
+| failed_db_migration | 100.0% | 0.0% |
+| iam_permission_regression | 100.0% | 33.3% |
+| jwt_auth_failure | 100.0% | 100.0% |
+| k8s_oom_killed | 100.0% | 66.7% |
+| kafka_consumer_lag | 100.0% | 100.0% |
+| load_balancer_misconfiguration | 100.0% | 33.3% |
+| postgres_pool_exhaustion | 100.0% | 0.0% |
+| queue_backlog | 100.0% | 100.0% |
+| redis_memory_eviction | 100.0% | 66.7% |
+| secret_rotation_failure | 100.0% | 0.0% |
+| slow_query_latency | 100.0% | 0.0% |
+| tls_certificate_expired | 100.0% | 33.3% |
+
+Misdiagnosed (holdout): INC-1001, INC-1002, INC-1003, INC-1009, INC-1010, INC-1011, INC-1016, INC-1017, INC-1023, INC-1024, INC-1025, INC-1026, INC-1031, INC-1032, INC-1033, INC-1034, INC-1035, INC-1036, INC-1037, INC-1038, INC-1039, INC-1040, INC-1042, INC-1043, INC-1045, INC-1046, INC-1047, INC-1048, INC-1049, INC-1054, INC-1055, INC-1056, INC-1057, INC-1059, INC-1060
+
+## How to read this
+
+- **Runbook accuracy**: the runbook behind the selected root cause is one of the incident's relevant runbooks. It is the headline metric because it applies whether a hypothesis came from a past incident, a runbook or an LLM.
+- **Category accuracy**: the selected hypothesis carries the exact category label. Hypotheses built from runbooks have no label, so this undercounts in holdout.
+- **Semantic match**: embedding cosine similarity between the selected root cause and the ground truth is at least 0.6 (sentence-transformers/all-MiniLM-L6-v2).
+- **Citation validity**: share of cited evidence ids that exist in the run's evidence catalog. **Unsupported claim rate**: hypotheses with non-zero confidence and remediation steps that cite nothing.
+- The dataset is synthetic: 20 failure types with 3 variants each. The standard setting always has two close siblings in the index, which is why holdout is the more honest measure of reasoning.

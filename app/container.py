@@ -9,6 +9,7 @@ from auth.api_keys import ApiKeyAuthenticator, parse_key_config
 from auth.permissions import AGENT_PRINCIPAL
 from core.exceptions import SearchUnavailableError
 from data.loader import load_incidents
+from evals.service import EvaluationService
 from graph.checkpoint import open_checkpointer
 from graph.runner import IncidentAnalyzer
 from graph.state import AgentDeps
@@ -41,6 +42,7 @@ class Container:
     api_keys: ApiKeyAuthenticator
     analyzer: IncidentAnalyzer
     checkpointer: AsyncSqliteSaver
+    evals: EvaluationService
 
     @classmethod
     async def create(cls, settings: Settings) -> "Container":
@@ -83,9 +85,11 @@ class Container:
             api_keys=ApiKeyAuthenticator(parse_key_config(settings.api_keys)),
             analyzer=IncidentAnalyzer(deps, RunRepository(db), approvals, checkpointer),
             checkpointer=checkpointer,
+            evals=EvaluationService(settings, settings.eval_reports_dir),
         )
 
     async def close(self) -> None:
+        await self.evals.shutdown()
         await self.analyzer.shutdown()
         await self.search_backend.close()
         await self.checkpointer.conn.close()

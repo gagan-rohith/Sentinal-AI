@@ -22,10 +22,18 @@ def test_parse_key_config_maps_hash_to_role() -> None:
     assert parse_key_config("") == {}
 
 
-@pytest.mark.parametrize("config", ["admin", "admin:tooshort", f"superuser:{'a' * 64}"])
+@pytest.mark.parametrize("config", ["nocolon", "admin:tooshort", f"superuser:{'a' * 64}"])
 def test_parse_key_config_rejects_bad_entries(config: str) -> None:
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match="entry 1 is not in the form") as exc_info:
         parse_key_config(config)
+    assert config not in str(exc_info.value)
+
+
+def test_pasted_plaintext_key_is_explained_without_echoing_it() -> None:
+    secret = generate_key()
+    with pytest.raises(ValueError, match="entry 2 is a plaintext key") as exc_info:
+        parse_key_config(f"viewer:{'b' * 64},{secret}")
+    assert secret not in str(exc_info.value)
 
 
 def test_authenticator_resolves_role_without_exposing_key() -> None:

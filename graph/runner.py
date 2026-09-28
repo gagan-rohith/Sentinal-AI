@@ -1,12 +1,12 @@
 import asyncio
-from typing import Any, cast
+from typing import Any
 
 import structlog
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.types import Command
 
-from agents.schemas import ApprovalDecision, ApprovalRequest
+from agents.schemas import ApprovalRequest
 from auth.permissions import Principal
 from auth.rbac import Permission
 from core.enums import RunStatus
@@ -69,22 +69,6 @@ class IncidentAnalyzer:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
-
-    async def run(
-        self, incident: Incident, run_id: str, decision: ApprovalDecision | None = None
-    ) -> IncidentState:
-        """Run to completion in the caller's task. Used by the benchmark.
-
-        If the run pauses for approval, it is resumed with `decision`; without one the
-        paused state is returned.
-        """
-        config = _config(run_id)
-        initial: IncidentState = {"run_id": run_id, "incident": incident, "stage": Stage.START}
-        await self.graph.ainvoke(initial, config)
-        if decision is not None and (await self.graph.aget_state(config)).next:
-            await self.graph.ainvoke(Command(resume=decision.model_dump(mode="json")), config)
-        snapshot = await self.graph.aget_state(config)
-        return cast(IncidentState, snapshot.values)
 
     async def _decide(
         self, run_id: str, principal: Principal, *, approved: bool, comment: str | None
