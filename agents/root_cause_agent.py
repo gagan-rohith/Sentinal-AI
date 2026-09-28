@@ -94,7 +94,7 @@ def heuristic_root_cause(state: IncidentState) -> RootCauseAnalysis:
         first_error = _first_error_time(catalog)
         candidate = candidates.get(BAD_DEPLOYMENT) or _Candidate(
             title=f"Regression introduced by deployment {latest.metadata.get('deployment_id')}",
-            description=f"The most recent change to the service. {latest.summary}",
+            description=f"The most recent change to the service. {latest.summary.rstrip('.')}.",
             category=BAD_DEPLOYMENT,
             terms=keywords(latest.summary),
         )
