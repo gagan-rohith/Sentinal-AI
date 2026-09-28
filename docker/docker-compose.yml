@@ -1,5 +1,19 @@
 name: sentinel-ai
 
+# Local stack. From the repository root:
+#   docker compose up --build                            # Elasticsearch, index job, API
+#   docker compose --profile observability up --build    # plus Prometheus on :9090
+#   docker compose --profile kibana up                   # plus Kibana on :5601
+#
+# API keys and optional settings (ANTHROPIC_API_KEY, LANGSMITH_API_KEY) come from the
+# repository's .env. Values below override .env entries that only make sense on the host.
+
+x-app-env: &app-env
+  SEARCH_BACKEND: elasticsearch
+  ELASTICSEARCH_URL: http://elasticsearch:9200
+  EMBEDDING_PROVIDER: sentence-transformers
+  LOG_FORMAT: json
+
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
@@ -20,6 +34,62 @@ services:
       retries: 30
       start_period: 30s
 
+  # One-shot job: builds the index, or rebuilds it when the document format or
+  # embedding model changed. Exits immediately when the index is already current.
+  ingest:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    image: sentinel-ai-worker:local
+    command: ["python", "-m", "retrieval.indexing", "--if-stale"]
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      <<: *app-env
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    image: sentinel-ai-api:local
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      <<: *app-env
+      DATABASE_PATH: /data/sentinel.db
+      # The ingest job owns indexing; the API only checks health.
+      AUTO_INDEX: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      - api-data:/data
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    profiles: ["observability"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
   kibana:
     image: docker.elastic.co/kibana/kibana:8.15.3
     profiles: ["kibana"]
@@ -38,3 +108,4 @@ services:
 
 volumes:
   es-data:
+  api-data:

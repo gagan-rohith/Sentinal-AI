@@ -30,7 +30,7 @@ from graph.state import AgentDeps
 from observability.logging import configure_logging
 from retrieval.factory import create_search_backend, embedder_from_settings
 from retrieval.hybrid_search import HybridSearcher
-from retrieval.indexing import build_documents, ingest
+from retrieval.indexing import build_documents, ensure_current_index
 from tools.backend import SimulatedOpsBackend
 from tools.tickets import TicketStore
 from tools.tool_registry import build_default_registry
@@ -74,8 +74,9 @@ async def run_benchmark(
     embedder = embedder_from_settings(settings)
     ops = SimulatedOpsBackend.from_data_dir(settings.data_dir)
     try:
-        if await search_backend.count() == 0:
-            await ingest(search_backend, embedder, build_documents(settings.data_dir, ops))
+        await ensure_current_index(
+            search_backend, embedder, lambda: build_documents(settings.data_dir, ops)
+        )
         searcher = HybridSearcher(search_backend, embedder)
 
         incidents = {i.incident_id: i for i in load_incidents(settings.data_dir)}

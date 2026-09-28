@@ -10,7 +10,7 @@ from core.models import Incident
 from retrieval.elastic_client import ElasticBackend, index_body
 from retrieval.embeddings import HashEmbedder
 from retrieval.hybrid_search import HybridSearcher
-from retrieval.indexing import ingest
+from retrieval.indexing import ensure_current_index, index_signature, ingest
 from retrieval.models import SearchDocument, SearchFilters
 
 ES_URL = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
@@ -63,6 +63,9 @@ async def test_elasticsearch_hybrid_search_end_to_end(
     embedder = HashEmbedder()
     indexed = await ingest(elastic, embedder, knowledge_docs, recreate=True)
     assert indexed == len(knowledge_docs) == await elastic.count()
+    # The signature round-trips through the index mapping's _meta.
+    assert await elastic.signature() == index_signature(embedder)
+    assert await ensure_current_index(elastic, embedder, lambda: knowledge_docs) is False
 
     searcher = HybridSearcher(elastic, embedder)
     runbooks = await searcher.search(

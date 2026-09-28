@@ -1,0 +1,25 @@
+# Secrets and local state never go into an image.
+.env
+*.db
+*.db-*
+var/
+
+# Tooling and caches
+.git/
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+**/__pycache__/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Not needed at runtime
+tests/
+docs/
+k8s/
+terraform/
+.github/
+frontend/node_modules/
+plan.md

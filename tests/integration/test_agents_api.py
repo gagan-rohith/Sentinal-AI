@@ -20,6 +20,8 @@ def wait_for(
         ).json()
         if run["status"] in statuses:
             return run
+        if run["status"] == "failed":
+            pytest.fail(f"run {run_id} failed: {run['error_code']}: {run['error_message']}")
         time.sleep(0.05)
     pytest.fail(f"run {run_id} did not reach {statuses} in {timeout_s}s")
 

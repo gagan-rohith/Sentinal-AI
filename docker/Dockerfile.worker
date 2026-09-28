@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1
+
+# Batch jobs: building the search index and running the benchmark.
+#   python -m retrieval.indexing --if-stale   (default command)
+#   python -m evals.benchmark
+
+# Dependencies stage. Keep it identical to Dockerfile.api so both images share the
+# build cache for this (large) layer.
+FROM python:3.11-slim AS deps
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HF_HOME=/opt/hf
+RUN python -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+# CPU-only torch first; the default wheel pulls in several GB of CUDA libraries.
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
+# Bake the embedding model in so containers start without network access.
+RUN python -c "from sentence_transformers import SentenceTransformer; \
+SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2', device='cpu')"
+
+FROM python:3.11-slim AS runtime
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    HF_HOME=/opt/hf \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1
+RUN useradd --create-home --uid 10001 sentinel
+COPY --from=deps /opt/venv /opt/venv
+COPY --from=deps /opt/hf /opt/hf
+WORKDIR /app
+COPY agents ./agents
+COPY app ./app
+COPY auth ./auth
+COPY core ./core
+COPY data ./data
+COPY graph ./graph
+COPY observability ./observability
+COPY retrieval ./retrieval
+COPY storage ./storage
+COPY tools ./tools
+COPY --chown=sentinel:sentinel evals ./evals
+USER sentinel
+CMD ["python", "-m", "retrieval.indexing", "--if-stale"]

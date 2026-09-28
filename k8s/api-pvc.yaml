@@ -1,0 +1,15 @@
+# SQLite database: incidents, runs, approvals and paused-run checkpoints. Persisting it is
+# what lets a run awaiting approval survive a pod restart.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sentinel-api-data
+  namespace: sentinel
+  labels:
+    app.kubernetes.io/name: sentinel-api
+    app.kubernetes.io/part-of: sentinel-ai
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi

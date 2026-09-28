@@ -95,6 +95,26 @@ class RunRepository:
         )
         await self.db.conn.commit()
 
+    async def fail_interrupted(self) -> int:
+        """Mark runs left queued or running by a previous process as failed.
+
+        Called at startup. Runs awaiting approval are untouched: they live in the
+        checkpointer and resume normally. Assumes one API process per database, which
+        SQLite requires anyway.
+        """
+        cursor = await self.db.conn.execute(
+            "UPDATE runs SET status = ?, error_code = 'interrupted', error_message = ?, "
+            "updated_at = ? WHERE status IN (?, ?)",
+            (
+                RunStatus.FAILED,
+                "the service restarted while this run was in progress; start a new analysis",
+                _now(),
+                *ACTIVE,
+            ),
+        )
+        await self.db.conn.commit()
+        return cursor.rowcount
+
     async def report(self, run_id: str) -> FinalReport:
         run = await self.get(run_id)
         if run.status is not RunStatus.COMPLETED:

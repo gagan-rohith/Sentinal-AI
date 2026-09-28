@@ -1,8 +1,12 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 from retrieval.bm25 import BM25Index
 from retrieval.models import ScoredDocument, SearchDocument, SearchFilters
 from retrieval.vector_search import VectorIndex
+
+# Stored with the index; a mismatch means the index was built differently and must be
+# rebuilt (document format, embedding model or vector size changed).
+IndexSignature = dict[str, Any]
 
 
 class SearchBackend(Protocol):
@@ -10,7 +14,11 @@ class SearchBackend(Protocol):
 
     async def ping(self) -> bool: ...
 
-    async def ensure_index(self, dimensions: int, *, recreate: bool = False) -> None: ...
+    async def ensure_index(
+        self, dimensions: int, signature: IndexSignature, *, recreate: bool = False
+    ) -> None: ...
+
+    async def signature(self) -> IndexSignature | None: ...
 
     async def index_documents(self, docs: list[SearchDocument]) -> int: ...
 
@@ -33,14 +41,21 @@ class InMemoryBackend:
     def __init__(self) -> None:
         self._bm25 = BM25Index()
         self._vectors = VectorIndex()
+        self._signature: IndexSignature | None = None
 
     async def ping(self) -> bool:
         return True
 
-    async def ensure_index(self, dimensions: int, *, recreate: bool = False) -> None:
+    async def ensure_index(
+        self, dimensions: int, signature: IndexSignature, *, recreate: bool = False
+    ) -> None:
         if recreate:
             self._bm25 = BM25Index()
             self._vectors = VectorIndex()
+        self._signature = dict(signature)
+
+    async def signature(self) -> IndexSignature | None:
+        return self._signature
 
     async def index_documents(self, docs: list[SearchDocument]) -> int:
         for doc in docs:

@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel-api
+  namespace: sentinel
+  labels:
+    app.kubernetes.io/name: sentinel-api
+    app.kubernetes.io/part-of: sentinel-ai
+spec:
+  # One replica with Recreate: the API keeps state in SQLite on a ReadWriteOnce volume, so
+  # two pods must never run at once. Scaling out means moving that state to PostgreSQL.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sentinel-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sentinel-api
+        app.kubernetes.io/part-of: sentinel-ai
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: /metrics
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: sentinel-ai-api:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: sentinel-config
+            - secretRef:
+                name: sentinel-secrets
+          resources:
+            # The embedding model and torch need about 1 GiB resident.
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          # Model loading can take a while on a cold node; the startup probe covers it so
+          # the liveness probe can stay strict afterwards.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sentinel-api-data
+        - name: tmp
+          emptyDir: {}

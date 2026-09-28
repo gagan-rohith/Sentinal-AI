@@ -16,7 +16,7 @@ from graph.state import AgentDeps
 from retrieval.backend import SearchBackend
 from retrieval.factory import create_search_backend, embedder_from_settings, reranker_from_settings
 from retrieval.hybrid_search import HybridSearcher
-from retrieval.indexing import build_documents, ingest
+from retrieval.indexing import build_documents, ensure_current_index
 from storage.approvals import ApprovalStore
 from storage.db import Database
 from storage.incidents import IncidentRepository
@@ -74,6 +74,10 @@ class Container:
             max_retries=settings.max_critic_retries,
         )
         checkpointer = await open_checkpointer(settings.database_path)
+        runs = RunRepository(db)
+        interrupted = await runs.fail_interrupted()
+        if interrupted:
+            log.warning("runs_interrupted_by_restart", count=interrupted)
         return cls(
             settings=settings,
             db=db,
@@ -83,7 +87,7 @@ class Container:
             searcher=searcher,
             tools=tools,
             api_keys=ApiKeyAuthenticator(parse_key_config(settings.api_keys)),
-            analyzer=IncidentAnalyzer(deps, RunRepository(db), approvals, checkpointer),
+            analyzer=IncidentAnalyzer(deps, runs, approvals, checkpointer),
             checkpointer=checkpointer,
             evals=EvaluationService(settings, settings.eval_reports_dir),
         )
@@ -115,8 +119,8 @@ async def _ensure_indexed(
     # The API still starts when Elasticsearch is down; /health reports it and search
     # calls fail with SearchUnavailableError until it is reachable.
     try:
-        if await search_backend.count() == 0:
-            docs = build_documents(settings.data_dir, ops)
-            await ingest(search_backend, searcher.embedder, docs)
+        await ensure_current_index(
+            search_backend, searcher.embedder, lambda: build_documents(settings.data_dir, ops)
+        )
     except SearchUnavailableError as exc:
         log.error("search_index_unavailable", error=exc.message)

@@ -1,0 +1,6 @@
+# Lets `docker compose up --build` run from the repository root.
+# The stack itself is defined in docker/docker-compose.yml.
+name: sentinel-ai
+
+include:
+  - docker/docker-compose.yml

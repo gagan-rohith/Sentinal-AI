@@ -9,6 +9,7 @@ from elasticsearch import ApiError, AsyncElasticsearch
 from elasticsearch.helpers import async_bulk
 
 from core.exceptions import SearchUnavailableError
+from retrieval.backend import IndexSignature
 from retrieval.bm25 import build_bm25_query
 from retrieval.models import ScoredDocument, SearchDocument, SearchFilters
 from retrieval.vector_search import build_knn_query
@@ -16,11 +17,12 @@ from retrieval.vector_search import build_knn_query
 log = structlog.get_logger(__name__)
 
 
-def index_body(dimensions: int) -> dict[str, Any]:
+def index_body(dimensions: int, signature: IndexSignature | None = None) -> dict[str, Any]:
     text = {"type": "text", "analyzer": "english"}
     return {
         "settings": {"number_of_shards": 1, "number_of_replicas": 0},
         "mappings": {
+            "_meta": {"signature": signature or {}},
             "dynamic": "strict",
             "properties": {
                 "document_id": {"type": "keyword"},
@@ -81,15 +83,28 @@ class ElasticBackend:
     async def ping(self) -> bool:
         return bool(await self.client.ping())
 
-    async def ensure_index(self, dimensions: int, *, recreate: bool = False) -> None:
+    async def ensure_index(
+        self, dimensions: int, signature: IndexSignature, *, recreate: bool = False
+    ) -> None:
         async with self._guard("ensure_index"):
             exists = bool(await self.client.indices.exists(index=self.index))
             if exists and recreate:
                 await self.client.indices.delete(index=self.index)
                 exists = False
             if not exists:
-                await self.client.indices.create(index=self.index, **index_body(dimensions))
-                log.info("index_created", index=self.index, dimensions=dimensions)
+                await self.client.indices.create(
+                    index=self.index, **index_body(dimensions, signature)
+                )
+                log.info("index_created", index=self.index, signature=signature)
+
+    async def signature(self) -> IndexSignature | None:
+        async with self._guard("signature"):
+            if not await self.client.indices.exists(index=self.index):
+                return None
+            mapping = await self.client.indices.get_mapping(index=self.index)
+        meta = mapping[self.index]["mappings"].get("_meta", {})
+        stored = meta.get("signature")
+        return dict(stored) if stored else None
 
     async def index_documents(self, docs: list[SearchDocument]) -> int:
         actions = (

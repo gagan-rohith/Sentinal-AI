@@ -1,12 +1,18 @@
 PYTHON ?= python
 
-.PHONY: install data run test lint format typecheck check
+.PHONY: install data index bench run test lint format typecheck check up down logs
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
 
 data:
 	$(PYTHON) -m data.generate_data
+
+index:
+	$(PYTHON) -m retrieval.indexing --if-stale
+
+bench:
+	$(PYTHON) -m evals.benchmark
 
 run:
 	$(PYTHON) -m uvicorn --factory app.main:create_app --reload --port 8000
@@ -26,3 +32,12 @@ typecheck:
 	$(PYTHON) -m mypy .
 
 check: lint typecheck test
+
+up:
+	docker compose up --build -d
+
+down:
+	docker compose down
+
+logs:
+	docker compose logs -f api

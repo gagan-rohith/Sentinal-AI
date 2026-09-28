@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (git-ignored) and adjust.
+aws_region        = "us-east-1"
+environment       = "demo"
+elasticsearch_url = "https://your-deployment.es.us-east-1.aws.elastic.cloud:443"
+# certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/..."
+# allowed_ingress_cidrs = ["203.0.113.0/24"]

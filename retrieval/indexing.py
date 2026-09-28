@@ -1,6 +1,9 @@
 """Build the knowledge index.
 
-Usage: python -m retrieval.indexing [--recreate]
+Usage: python -m retrieval.indexing [--recreate | --if-stale]
+
+--if-stale rebuilds only when the index is empty or was built with a different document
+format or embedding model; deployments run it on every start.
 
 Indexed sources:
 - runbooks, one chunk per section so each chunk fits the embedding model's window
@@ -14,6 +17,7 @@ Open incidents are not indexed: they are the questions, not the knowledge.
 import argparse
 import asyncio
 import re
+from collections.abc import Callable
 from datetime import timedelta
 from pathlib import Path
 
@@ -23,7 +27,7 @@ from core.enums import IncidentStatus, SourceType
 from core.models import Incident
 from data import DATA_DIR
 from data.loader import Runbook, ServiceDoc, load_incidents, load_runbooks, load_service_docs
-from retrieval.backend import SearchBackend
+from retrieval.backend import IndexSignature, SearchBackend
 from retrieval.embeddings import EmbeddingProvider
 from retrieval.models import SearchDocument
 from tools.backend import SimulatedOpsBackend
@@ -32,6 +36,9 @@ from tools.logs import summarize_errors
 log = structlog.get_logger(__name__)
 
 EMBED_BATCH = 64
+# Bump whenever the documents or their fields change, so existing indexes get rebuilt.
+# 2: incident documents carry root_cause and remediation metadata.
+INDEX_FORMAT_VERSION = 2
 
 
 def _slug(text: str) -> str:
@@ -146,6 +153,14 @@ def build_documents(
     return docs
 
 
+def index_signature(embedder: EmbeddingProvider) -> IndexSignature:
+    return {
+        "format_version": INDEX_FORMAT_VERSION,
+        "embedder": embedder.name,
+        "dimensions": embedder.dimensions,
+    }
+
+
 async def ingest(
     backend: SearchBackend,
     embedder: EmbeddingProvider,
@@ -153,7 +168,7 @@ async def ingest(
     *,
     recreate: bool = False,
 ) -> int:
-    await backend.ensure_index(embedder.dimensions, recreate=recreate)
+    await backend.ensure_index(embedder.dimensions, index_signature(embedder), recreate=recreate)
     embedded: list[SearchDocument] = []
     for start in range(0, len(docs), EMBED_BATCH):
         batch = docs[start : start + EMBED_BATCH]
@@ -168,15 +183,39 @@ async def ingest(
     return count
 
 
-async def _main(recreate: bool) -> None:
+async def ensure_current_index(
+    backend: SearchBackend,
+    embedder: EmbeddingProvider,
+    docs: Callable[[], list[SearchDocument]],
+) -> bool:
+    """Rebuild the index when it is empty or was built differently. Returns True if rebuilt."""
+    expected = index_signature(embedder)
+    stored = await backend.signature()
+    if await backend.count() > 0 and stored == expected:
+        return False
+    log.info("index_rebuild", backend=backend.name, stored=stored, expected=expected)
+    await ingest(backend, embedder, docs(), recreate=True)
+    return True
+
+
+async def _main(mode: str) -> None:
     from app.config import get_settings
+    from observability.logging import configure_logging
     from retrieval.factory import create_search_backend, embedder_from_settings
 
     settings = get_settings()
+    configure_logging(settings.log_level, settings.log_format)
     backend = create_search_backend(settings)
+    embedder = embedder_from_settings(settings)
     try:
+        if mode == "if-stale":
+            rebuilt = await ensure_current_index(
+                backend, embedder, lambda: build_documents(settings.data_dir)
+            )
+            print("index rebuilt" if rebuilt else "index is current; nothing to do")
+            return
         docs = build_documents(settings.data_dir)
-        count = await ingest(backend, embedder_from_settings(settings), docs, recreate=recreate)
+        count = await ingest(backend, embedder, docs, recreate=mode == "recreate")
         print(f"indexed {count} documents into {backend.name}")
     finally:
         await backend.close()
@@ -184,9 +223,15 @@ async def _main(recreate: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--recreate", action="store_true", help="drop and rebuild the index")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--recreate", action="store_true", help="drop and rebuild the index")
+    group.add_argument(
+        "--if-stale",
+        action="store_true",
+        help="rebuild only when the index is empty or its signature does not match",
+    )
     args = parser.parse_args()
-    asyncio.run(_main(args.recreate))
+    asyncio.run(_main("recreate" if args.recreate else "if-stale" if args.if_stale else "add"))
 
 
 if __name__ == "__main__":
