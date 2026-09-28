@@ -113,6 +113,21 @@ def test_second_analysis_while_running_is_rejected(client: TestClient) -> None:
     assert response.json()["error"]["details"]["run_id"] == active.run_id
 
 
+def test_recent_runs_newest_first(client: TestClient) -> None:
+    assert client.get("/agents/runs", headers=headers(Role.VIEWER)).json() == []
+    first = start(client)
+    wait_for(client, first, "awaiting_approval")
+    second = start(client, SAFE_INCIDENT_ID)
+    wait_for(client, second, "completed")
+
+    runs = client.get("/agents/runs", params={"limit": 5}, headers=headers(Role.VIEWER)).json()
+    assert [r["run_id"] for r in runs] == [second, first]
+    assert runs[1]["status"] == "awaiting_approval"
+    only_one = client.get("/agents/runs", params={"limit": 1}, headers=headers(Role.VIEWER))
+    assert len(only_one.json()) == 1
+    assert client.get("/agents/runs").status_code == 401
+
+
 def test_unknown_run_and_incident(client: TestClient) -> None:
     assert (
         client.get("/agents/status/run-000000000000", headers=headers(Role.VIEWER)).status_code

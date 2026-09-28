@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { ApprovalRecord } from "../api";
+import { Meter, Tag } from "./ui";
 
 interface Props {
   approval: ApprovalRecord;
@@ -12,29 +13,37 @@ export function ApprovalPanel({ approval, busy, onDecide }: Props) {
   const [text, setText] = useState("");
   const { request } = approval;
   return (
-    <section className="card approval">
-      <h2>Approval required</h2>
+    <section className="card callout tone-warning approval">
+      <h2>
+        <span aria-hidden="true">! </span>Approval required before anything changes
+      </h2>
       <p>
-        Root cause: <strong>{request.root_cause}</strong> (confidence{" "}
-        {Math.round(request.root_cause_confidence * 100)}%). Overall risk:{" "}
-        <span className={`badge risk-${request.overall_risk}`}>{request.overall_risk}</span>
+        The agents traced this to <strong>{request.root_cause}</strong> and want to make the
+        changes below. Nothing runs until a person decides.
       </p>
-      <h3>Proposed production changes</h3>
-      <ul>
+      <Meter value={request.root_cause_confidence} label="confidence" />
+      <h3>
+        Proposed production changes <Tag tone={`risk-${request.overall_risk}`}>{request.overall_risk} risk</Tag>
+      </h3>
+      <ul className="plain actions-list">
         {request.actions.map((action) => (
           <li key={`${action.tool}-${JSON.stringify(action.arguments)}`}>
-            <code>
-              {action.tool}({Object.entries(action.arguments).map(([k, v]) => `${k}=${v}`).join(", ")})
-            </code>{" "}
-            <span className={`badge risk-${action.risk}`}>{action.risk}</span>
-            <div className="muted">{action.description}</div>
+            <code className="action">
+              {action.tool}(
+              {Object.entries(action.arguments)
+                .map(([k, v]) => `${k}=${v}`)
+                .join(", ")}
+              )
+            </code>
+            <Tag tone={`risk-${action.risk}`}>{action.risk}</Tag>
+            <div className="muted small">{action.description}</div>
           </li>
         ))}
       </ul>
-      <p className="muted">Rollback: {request.rollback_plan}</p>
+      <p className="muted small">Rollback: {request.rollback_plan}</p>
       {request.unresolved_critic_issues.length > 0 && (
-        <div className="warning">
-          The critic did not approve this plan:
+        <div className="callout tone-critical">
+          <strong>The critic did not approve this plan:</strong>
           <ul>
             {request.unresolved_critic_issues.map((issue) => (
               <li key={issue}>{issue}</li>
@@ -42,7 +51,7 @@ export function ApprovalPanel({ approval, busy, onDecide }: Props) {
           </ul>
         </div>
       )}
-      <label>
+      <label className="field">
         Comment (required to reject)
         <input
           value={text}
@@ -63,7 +72,7 @@ export function ApprovalPanel({ approval, busy, onDecide }: Props) {
           Reject
         </button>
       </div>
-      <p className="muted">Approving needs an admin key; rejecting needs operator or above.</p>
+      <p className="muted small">Approving needs an admin key; rejecting needs operator or above.</p>
     </section>
   );
 }

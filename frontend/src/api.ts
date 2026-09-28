@@ -25,8 +25,47 @@ export interface RunRecord {
   status: RunStatus;
   stage: string | null;
   retry_count: number;
+  requested_by: string;
   error_code: string | null;
   error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface RetrievalScores {
+  queries: number;
+  recall_at: Record<string, number>;
+  precision_at_3: number;
+  mrr: number;
+}
+
+export interface BenchmarkReport {
+  setup: {
+    started_at: string;
+    git_commit: string;
+    search_backend: string;
+    embedder: string;
+    llm_mode: string;
+    llm_model: string | null;
+    incident_cases: number;
+    qa_queries: number;
+  };
+  retrieval: {
+    mode: "bm25" | "vector" | "hybrid";
+    incident_queries: RetrievalScores;
+    qa_queries: RetrievalScores;
+    similar_incident_hit_at_3: number;
+  }[];
+  agents: {
+    setting: "standard" | "holdout";
+    cases: number;
+    runbook_accuracy: number;
+    category_accuracy: number;
+    mean_confidence: number;
+    brier_score: number;
+    citation_validity: number;
+    retry_rate: number;
+  }[];
 }
 
 export interface ProposedAction {
@@ -144,6 +183,8 @@ export const api = {
     return response.json();
   },
   incidents: (key: string) => request<Incident[]>("/incidents?limit=200", key),
+  recentRuns: (key: string) => request<RunRecord[]>("/agents/runs?limit=25", key),
+  benchmark: (key: string) => request<BenchmarkReport>("/evals/latest", key),
   analyze: (key: string, incidentId: string) =>
     request<RunRecord>(`/agents/analyze/${incidentId}`, key, { method: "POST" }),
   status: (key: string, runId: string) => request<RunRecord>(`/agents/status/${runId}`, key),

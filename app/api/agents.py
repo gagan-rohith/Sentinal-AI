@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, Path, status
+from fastapi import APIRouter, Body, Depends, Path, Query, status
 from pydantic import BaseModel, Field
 
 from agents.schemas import FinalReport
@@ -35,6 +35,15 @@ async def analyze(
 ) -> RunRecord:
     incident = await container.incidents.get(incident_id)
     return await container.analyzer.start(incident, principal.subject)
+
+
+@router.get("/runs", response_model=list[RunRecord], summary="Most recent runs, newest first")
+async def recent_runs(
+    limit: int = Query(default=20, ge=1, le=200),
+    container: Container = Depends(get_container),
+    _: Principal = Depends(require(Permission.READ_REPORTS)),
+) -> list[RunRecord]:
+    return await container.analyzer.runs.recent(limit)
 
 
 @router.get("/status/{run_id}", response_model=RunRecord)

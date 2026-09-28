@@ -53,6 +53,15 @@ class RunRepository:
         await self.db.conn.commit()
         return await self.get(run_id)
 
+    async def recent(self, limit: int = 20) -> list[RunRecord]:
+        async with self.db.conn.execute(
+            "SELECT run_id, incident_id, status, stage, retry_count, requested_by, error_code, "
+            "error_message, created_at, updated_at FROM runs ORDER BY created_at DESC LIMIT ?",
+            (limit,),
+        ) as cursor:
+            rows = await cursor.fetchall()
+        return [RunRecord.model_validate(dict(row)) for row in rows]
+
     async def get(self, run_id: str) -> RunRecord:
         async with self.db.conn.execute(
             "SELECT run_id, incident_id, status, stage, retry_count, requested_by, error_code, "

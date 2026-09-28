@@ -1,131 +1,171 @@
 import type { Evidence, FinalReport, Hypothesis } from "../api";
+import { dateTime, percent } from "../format";
+import { EvidenceChip, Meter, Tag } from "./ui";
+
+const KIND_LABELS: [string, string][] = [
+  ["health", "Service health"],
+  ["log", "Error logs"],
+  ["metric", "Metric anomalies"],
+  ["change", "Recent changes"],
+  ["deployment", "Deployments"],
+  ["runbook", "Runbooks"],
+  ["incident", "Similar past incidents"],
+  ["service_doc", "Service documentation"],
+];
 
 function Citations({ ids, evidence }: { ids: string[]; evidence: Map<string, Evidence> }) {
-  if (ids.length === 0) return <span className="muted">none</span>;
+  if (ids.length === 0) return <span className="muted small">none</span>;
   return (
-    <>
+    <span className="chips">
       {ids.map((id) => (
-        <abbr key={id} className="cite" title={evidence.get(id)?.summary ?? "unknown evidence"}>
-          {id}
-        </abbr>
+        <EvidenceChip key={id} id={id} summary={evidence.get(id)?.summary} />
       ))}
-    </>
+    </span>
   );
 }
 
-function HypothesisRow({
-  hypothesis,
-  selected,
-  evidence,
-}: {
-  hypothesis: Hypothesis;
-  selected: boolean;
-  evidence: Map<string, Evidence>;
-}) {
+function isRuledOut(h: Hypothesis): boolean {
+  return h.confidence === 0 || h.evidence_against.length > h.evidence_for.length;
+}
+
+function Chapter({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <tr className={selected ? "selected" : ""}>
-      <td>
-        <strong>{hypothesis.title}</strong>
-        {hypothesis.category && <div className="muted">{hypothesis.category}</div>}
-      </td>
-      <td>{Math.round(hypothesis.confidence * 100)}%</td>
-      <td>
-        <Citations ids={hypothesis.evidence_for} evidence={evidence} />
-      </td>
-      <td>
-        <Citations ids={hypothesis.evidence_against} evidence={evidence} />
-      </td>
-    </tr>
+    <section className="card chapter">
+      <h2>
+        <span className="chapter-n">{n}</span>
+        {title}
+      </h2>
+      {children}
+    </section>
   );
 }
 
 export function ReportView({ report }: { report: FinalReport }) {
   const evidence = new Map(report.evidence.map((e) => [e.id, e]));
-  const { postmortem, remediation_plan: plan } = report;
+  const { postmortem, remediation_plan: plan, selected_root_cause: selected } = report;
+  const hypotheses = [...report.hypotheses].sort((a, b) => b.confidence - a.confidence);
+  const groups = KIND_LABELS.map(([kind, label]) => ({
+    label,
+    items: report.evidence.filter((e) => e.kind === kind),
+  })).filter((g) => g.items.length > 0);
+
   return (
-    <>
-      <section className="card">
-        <h2>Root cause</h2>
-        <p>
-          <strong>{report.selected_root_cause.title}</strong> with{" "}
-          {Math.round(report.selected_root_cause.confidence * 100)}% confidence.
+    <div className="story">
+      <section className="card verdict">
+        <div className="verdict-label">Root cause</div>
+        <div className="verdict-title">{selected.title}</div>
+        <Meter value={selected.confidence} label="confidence" />
+        <p className="muted small">
+          Chosen from {report.hypotheses.length} hypotheses using {report.evidence.length} pieces
+          of evidence and {report.tool_call_count} tool calls. Agents ran in {report.mode} mode
+          {report.retries > 0 && `; the critic asked for ${report.retries} revisions`}.
         </p>
-        <p className="muted">
-          Agents: {report.mode}. Critic: {report.critic_review?.verdict ?? "none"}
-          {report.retries > 0 && `, ${report.retries} retries`}
-          {report.unresolved_critic_issues && ", unresolved issues"}. Tool calls:{" "}
-          {report.tool_call_count}.
-        </p>
-        <table>
-          <thead>
-            <tr>
-              <th>Hypothesis</th>
-              <th>Confidence</th>
-              <th>Evidence for</th>
-              <th>Evidence against</th>
-            </tr>
-          </thead>
-          <tbody>
-            {report.hypotheses.map((h) => (
-              <HypothesisRow
-                key={h.title}
-                hypothesis={h}
-                selected={h.title === report.selected_root_cause.title}
-                evidence={evidence}
-              />
-            ))}
-          </tbody>
-        </table>
       </section>
 
-      <section className="card">
-        <h2>Remediation</h2>
+      <Chapter n={1} title="What happened">
+        <p>{postmortem.summary}</p>
+        <p className="impact">{postmortem.impact}</p>
+        <ol className="timeline">
+          {report.timeline.map((event) => (
+            <li key={`${event.timestamp}-${event.source}`}>
+              <time>{dateTime(event.timestamp)}</time>
+              <span>{event.description}</span>
+            </li>
+          ))}
+        </ol>
+      </Chapter>
+
+      <Chapter n={2} title="Evidence gathered">
+        <div className="evidence-groups">
+          {groups.map((group) => (
+            <details key={group.label} open={group.items.length <= 6}>
+              <summary>
+                {group.label} <span className="muted">({group.items.length})</span>
+              </summary>
+              <ul>
+                {group.items.map((e) => (
+                  <li key={e.id}>
+                    <EvidenceChip id={e.id} summary={e.summary} />
+                    <span>{e.summary}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))}
+        </div>
+      </Chapter>
+
+      <Chapter n={3} title="Hypotheses considered">
+        <div className="hypotheses">
+          {hypotheses.map((h) => {
+            const chosen = h.title === selected.title;
+            const ruledOut = !chosen && isRuledOut(h);
+            return (
+              <article
+                key={h.title}
+                className={`hypothesis${chosen ? " chosen" : ""}${ruledOut ? " ruled-out" : ""}`}
+              >
+                <header>
+                  <strong>{h.title}</strong>
+                  {chosen && <Tag tone="good">Selected</Tag>}
+                  {ruledOut && <Tag tone="neutral">Ruled out</Tag>}
+                </header>
+                <Meter value={h.confidence} label="confidence" />
+                <p className="small">{h.description}</p>
+                <div className="cites">
+                  <span className="muted small">For</span>
+                  <Citations ids={h.evidence_for} evidence={evidence} />
+                  <span className="muted small">Against</span>
+                  <Citations ids={h.evidence_against} evidence={evidence} />
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </Chapter>
+
+      <Chapter n={4} title="Decision">
         <p>
-          {plan.summary} Overall risk:{" "}
-          <span className={`badge risk-${plan.overall_risk}`}>{plan.overall_risk}</span>
+          {plan.summary} Overall risk: <Tag tone={`risk-${plan.overall_risk}`}>{plan.overall_risk}</Tag>
         </p>
-        <ol>
+        <ol className="steps">
           {plan.steps.map((step) => (
             <li key={step.description}>
-              <span className="badge">{step.kind}</span> {step.description}
+              <div className="step-head">
+                <Tag>{step.kind}</Tag>
+                {step.action && <Tag tone="warning">changes production</Tag>}
+              </div>
+              <span>{step.description}</span>
               {step.action && (
-                <div>
-                  <code>
-                    {step.action.tool}({step.action.service}
-                    {step.action.deployment_id ? `, ${step.action.deployment_id}` : ""})
-                  </code>
-                </div>
+                <code className="action">
+                  {step.action.tool}({step.action.service}
+                  {step.action.deployment_id ? `, ${step.action.deployment_id}` : ""})
+                </code>
               )}
             </li>
           ))}
         </ol>
-        <p className="muted">Rollback: {plan.rollback_plan}</p>
-        <p>
-          Approval: <strong>{report.approval_status}</strong>
-          {report.approval &&
-            ` by ${report.approval.decided_by}${report.approval.comment ? ` (${report.approval.comment})` : ""}`}
-        </p>
-        {report.executed_actions.map((a) => (
-          <p key={a.tool}>
-            Executed <code>{a.tool}</code>: {a.status}. {a.message}
-          </p>
-        ))}
-      </section>
-
-      <section className="card">
-        <h2>Postmortem</h2>
-        <h3>Summary</h3>
-        <p>{postmortem.summary}</p>
-        <h3>Impact</h3>
-        <p>{postmortem.impact}</p>
-        <h3>Timeline</h3>
-        <ul className="timeline">
-          {report.timeline.map((event) => (
-            <li key={`${event.timestamp}-${event.source}`}>
-              <time>{new Date(event.timestamp).toLocaleString()}</time> {event.description}
-            </li>
+        <div className={`outcome tone-${report.approval_status === "approved" ? "good" : report.approval_status === "rejected" ? "critical" : "neutral"}`}>
+          <strong>
+            Human decision: <span className="cap">{report.approval_status.replace("_", " ")}</span>
+          </strong>
+          {report.approval && (
+            <span>
+              {" "}
+              by {report.approval.decided_by}
+              {report.approval.comment && `: "${report.approval.comment}"`}
+            </span>
+          )}
+          {report.executed_actions.map((a) => (
+            <div key={a.tool}>
+              <code>{a.tool}</code> {a.status}. {a.message}
+            </div>
           ))}
-        </ul>
+        </div>
+        <p className="muted small">Rollback plan: {plan.rollback_plan}</p>
+      </Chapter>
+
+      <Chapter n={5} title="Follow-up">
         {postmortem.prevention.length > 0 && (
           <>
             <h3>Prevention</h3>
@@ -136,30 +176,25 @@ export function ReportView({ report }: { report: FinalReport }) {
             </ul>
           </>
         )}
-        {postmortem.open_questions.length > 0 && (
-          <>
-            <h3>Open questions</h3>
-            <ul>
-              {postmortem.open_questions.map((q) => (
-                <li key={q}>{q}</li>
-              ))}
-            </ul>
-          </>
+        <h3>Open questions</h3>
+        {postmortem.open_questions.length > 0 ? (
+          <ul>
+            {postmortem.open_questions.map((q) => (
+              <li key={q}>{q}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted small">None recorded.</p>
         )}
-      </section>
-
-      <section className="card">
-        <h2>Evidence ({report.evidence.length})</h2>
-        <ul className="evidence">
-          {report.evidence.map((e) => (
-            <li key={e.id}>
-              <span className="cite">{e.id}</span> <span className="badge">{e.kind}</span>{" "}
-              {e.summary}
-            </li>
-          ))}
-        </ul>
-        {report.trace_id && <p className="muted">Trace id: {report.trace_id}</p>}
-      </section>
-    </>
+        {report.critic_review && (
+          <p className="muted small">
+            Critic verdict: {report.critic_review.verdict} (confidence{" "}
+            {percent(report.critic_review.confidence)})
+            {report.unresolved_critic_issues && ", with unresolved issues"}.
+          </p>
+        )}
+        {report.trace_id && <p className="muted small">Trace id {report.trace_id}</p>}
+      </Chapter>
+    </div>
   );
 }

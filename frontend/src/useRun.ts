@@ -84,5 +84,11 @@ export function useRun(apiKey: string) {
     setState(EMPTY);
   };
 
-  return { ...state, start, decide, reset };
+  // Show an existing run, for example one opened from the overview.
+  const open = async (runId: string) => {
+    setState({ ...EMPTY, busy: true });
+    await follow(runId);
+  };
+
+  return { ...state, start, decide, reset, open };
 }

@@ -1,25 +1,31 @@
 import type { Incident } from "../api";
+import { dateTime } from "../format";
+import { SEVERITY_TONE } from "./IncidentList";
+import { Tag } from "./ui";
 
 export function IncidentDetails({ incident }: { incident: Incident }) {
   const metrics = Object.entries(incident.metrics_summary);
   return (
-    <section className="card">
-      <h2>
-        {incident.incident_id}: {incident.title}
-      </h2>
-      <p className="muted">
-        {incident.service} in {incident.environment}, {incident.severity},{" "}
-        {new Date(incident.timestamp).toLocaleString()}
+    <section className="card incident-details">
+      <div className="eyebrow">
+        {incident.incident_id} <Tag tone={SEVERITY_TONE[incident.severity]}>{incident.severity}</Tag>
+        <Tag>{incident.status}</Tag>
+      </div>
+      <h2 className="incident-title">{incident.title}</h2>
+      <p className="muted small">
+        {incident.service} in {incident.environment}, alerted {dateTime(incident.timestamp)}
       </p>
       <p>{incident.description}</p>
       {incident.symptoms.length > 0 && (
         <>
           <h3>Symptoms</h3>
-          <ul>
+          <div className="chips">
             {incident.symptoms.map((s) => (
-              <li key={s}>{s}</li>
+              <span key={s} className="symptom">
+                {s}
+              </span>
             ))}
-          </ul>
+          </div>
         </>
       )}
       {metrics.length > 0 && (
@@ -28,8 +34,8 @@ export function IncidentDetails({ incident }: { incident: Incident }) {
           <dl className="metrics">
             {metrics.map(([name, value]) => (
               <div key={name}>
-                <dt>{name}</dt>
-                <dd>{value}</dd>
+                <dt>{name.replaceAll("_", " ")}</dt>
+                <dd>{value.toLocaleString()}</dd>
               </div>
             ))}
           </dl>
