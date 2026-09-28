@@ -46,7 +46,8 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Run tests
         # Any failing test, or coverage under 80%, fails the build.
-        run: pytest --cov --cov-report=term-missing --cov-report=xml --cov-fail-under=80 -rs
+        # -rfEs lists failures, errors and skips in the summary at the end of the log.
+        run: pytest --cov --cov-report=term-missing --cov-report=xml --cov-fail-under=80 -rfEs
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4

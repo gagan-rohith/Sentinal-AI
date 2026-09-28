@@ -45,8 +45,18 @@ CREATE TABLE IF NOT EXISTS approvals (
 """
 
 
+BUSY_TIMEOUT_MS = 15_000
+
+
 class Database:
-    """Single shared aiosqlite connection. SQLite serializes writes, which is fine at demo scale."""
+    """Single shared aiosqlite connection for the whole process.
+
+    Everything that touches the file, including the LangGraph checkpointer, uses this one
+    connection. aiosqlite runs its statements one at a time on a single thread, so writers
+    in this process never contend for SQLite's lock. Separate connections did, and in WAL
+    mode a read-to-write upgrade after another connection's commit fails immediately with
+    "database is locked" regardless of the busy timeout.
+    """
 
     def __init__(self, path: Path | str) -> None:
         self.path = str(path)
@@ -58,6 +68,9 @@ class Database:
         self._conn = await aiosqlite.connect(self.path)
         self._conn.row_factory = aiosqlite.Row
         await self._conn.execute("PRAGMA journal_mode=WAL")
+        # Other processes on the same file (the MCP server, the benchmark) still need to
+        # wait for the lock instead of failing at once.
+        await self._conn.execute(f"PRAGMA busy_timeout = {BUSY_TIMEOUT_MS}")
         await self._conn.executescript(SCHEMA)
         await self._conn.commit()
 

@@ -73,7 +73,7 @@ class Container:
             principal=AGENT_PRINCIPAL,
             max_retries=settings.max_critic_retries,
         )
-        checkpointer = await open_checkpointer(settings.database_path)
+        checkpointer = await open_checkpointer(db.conn)
         runs = RunRepository(db)
         interrupted = await runs.fail_interrupted()
         if interrupted:
@@ -96,7 +96,6 @@ class Container:
         await self.evals.shutdown()
         await self.analyzer.shutdown()
         await self.search_backend.close()
-        await self.checkpointer.conn.close()
         await self.db.close()
 
 

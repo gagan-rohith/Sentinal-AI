@@ -106,7 +106,14 @@ class IncidentAnalyzer:
     def _spawn(self, run_id: str, graph_input: GraphInput) -> None:
         task = asyncio.create_task(self._drive(run_id, graph_input), name=run_id)
         self._tasks[run_id] = task
-        task.add_done_callback(lambda _: self._tasks.pop(run_id, None))
+        task.add_done_callback(lambda done: self._forget(run_id, done))
+
+    def _forget(self, run_id: str, task: asyncio.Task[None]) -> None:
+        # A paused run's task can finish after the resume task is registered under the
+        # same run id; only drop the entry if it is still this task. The map is also what
+        # keeps a strong reference to running tasks, which asyncio itself does not.
+        if self._tasks.get(run_id) is task:
+            del self._tasks[run_id]
 
     async def _drive(self, run_id: str, graph_input: GraphInput) -> None:
         # Every log line from this run, including agent and tool logs, carries run_id.

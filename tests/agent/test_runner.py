@@ -154,18 +154,15 @@ async def test_approval_survives_a_restart(
     path = tmp_path / "sentinel.db"
     db = Database(path)
     await db.connect()
-    saver = await open_checkpointer(path)
-    first = make_analyzer(db, backend, searcher, saver)
+    first = make_analyzer(db, backend, searcher, await open_checkpointer(db.conn))
     run_id = await paused_run(first, demo_incident)
     await first.shutdown()
-    await saver.conn.close()
     await db.close()
 
-    # A fresh process: new connections, new graph, same files.
+    # A fresh process: new connection, new graph, same file.
     db = Database(path)
     await db.connect()
-    saver = await open_checkpointer(path)
-    second = make_analyzer(db, backend, searcher, saver)
+    second = make_analyzer(db, backend, searcher, await open_checkpointer(db.conn))
     try:
         await second.approve(run_id, ADMIN, "approved after restart")
         finished = await second.wait(run_id)
@@ -173,8 +170,55 @@ async def test_approval_survives_a_restart(
         report = await second.runs.report(run_id)
         assert [a.status for a in report.executed_actions] == ["succeeded"]
     finally:
-        await saver.conn.close()
         await db.close()
+
+
+async def test_concurrent_runs_on_one_database_file(
+    tmp_path: Path,
+    backend: SimulatedOpsBackend,
+    searcher: HybridSearcher,
+    incidents: list[Incident],
+) -> None:
+    # Regression test: with separate connections for the app tables and the checkpointer,
+    # concurrent runs failed in CI with "database is locked".
+    db = Database(tmp_path / "sentinel.db")
+    await db.connect()
+    analyzer = make_analyzer(db, backend, searcher, await open_checkpointer(db.conn))
+    try:
+        started = [await analyzer.start(incident, "tester") for incident in incidents[:12]]
+        finished = [await analyzer.wait(run.run_id) for run in started]
+        assert not [r for r in finished if r.status is RunStatus.FAILED]
+
+        paused = [r.run_id for r in finished if r.status is RunStatus.AWAITING_APPROVAL]
+        assert paused
+        for run_id in paused:
+            await analyzer.approve(run_id, ADMIN, None)
+        done = [await analyzer.wait(run_id) for run_id in paused]
+        assert all(r.status is RunStatus.COMPLETED for r in done), [
+            (r.run_id, r.error_message) for r in done
+        ]
+    finally:
+        await analyzer.shutdown()
+        await db.close()
+
+
+async def test_finished_task_does_not_drop_its_successor(
+    analyzer: IncidentAnalyzer, demo_incident: Incident
+) -> None:
+    run_id = await paused_run(analyzer, demo_incident)
+
+    async def idle() -> None:
+        await asyncio.sleep(0)
+
+    old = asyncio.create_task(idle())
+    successor = asyncio.create_task(asyncio.sleep(3600))
+    analyzer._tasks[run_id] = successor
+    await old
+    analyzer._forget(run_id, old)
+    assert analyzer._tasks[run_id] is successor
+    analyzer._forget(run_id, successor)
+    assert run_id not in analyzer._tasks
+    successor.cancel()
 
 
 async def test_typed_failure_is_recorded(

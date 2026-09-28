@@ -71,11 +71,17 @@ ignore = ["B008"]  # FastAPI Depends() in argument defaults is idiomatic
 python_version = "3.11"
 strict = true
 plugins = ["pydantic.mypy"]
-exclude = ["^frontend/", "^\\.venv/", "^tests/"]
+exclude = ["^frontend/", "^\\.venv/", "^var/", "^tests/"]
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_defs = false
+
+# Optional "ml" extra, imported lazily and not installed in CI. Its use is already typed
+# as Any at the call sites.
+[[tool.mypy.overrides]]
+module = ["sentence_transformers", "sentence_transformers.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

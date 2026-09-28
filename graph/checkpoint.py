@@ -7,7 +7,6 @@ allowing arbitrary classes to be reconstructed from the database.
 
 import inspect
 from enum import Enum
-from pathlib import Path
 from types import ModuleType
 
 import aiosqlite
@@ -53,11 +52,11 @@ def serializer() -> JsonPlusSerializer:
     return JsonPlusSerializer(allowed_msgpack_modules=allowed_types())
 
 
-async def open_checkpointer(path: Path | str) -> AsyncSqliteSaver:
-    """Open a SQLite checkpointer. The caller closes it with `await saver.conn.close()`."""
-    if str(path) != ":memory:":
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-    conn = await aiosqlite.connect(str(path))
+async def open_checkpointer(conn: aiosqlite.Connection) -> AsyncSqliteSaver:
+    """Checkpointer on the application's shared connection (see storage.db.Database).
+
+    The connection belongs to the Database; closing the Database closes the checkpointer.
+    """
     saver = AsyncSqliteSaver(conn, serde=serializer())
     await saver.setup()
     return saver
