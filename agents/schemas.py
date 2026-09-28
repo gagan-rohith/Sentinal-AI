@@ -190,6 +190,7 @@ class AgentCall(BaseModel):
 class FinalReport(BaseModel):
     run_id: str
     incident_id: str
+    trace_id: str | None = None
     postmortem: PostmortemDraft
     timeline: list[TimelineEvent]
     selected_root_cause: Hypothesis

@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     app_name: str = "SentinelAI"
     app_env: str = "development"
     log_level: str = "INFO"
+    # json for anything that ships logs somewhere; console is easier to read locally.
+    log_format: Literal["json", "console"] = "json"
 
     database_path: Path = Path("var/sentinel.db")
     data_dir: Path = DATA_DIR
@@ -42,6 +44,10 @@ class Settings(BaseSettings):
     max_critic_retries: int = Field(default=3, ge=0, le=10)
 
     eval_reports_dir: Path = Path("evals/reports")
+
+    # LangSmith tracing turns on only when a key is set.
+    langsmith_api_key: SecretStr | None = None
+    langsmith_project: str = "sentinel-ai"
 
 
 @lru_cache(maxsize=1)

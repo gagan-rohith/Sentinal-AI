@@ -9,7 +9,7 @@ data:
 	$(PYTHON) -m data.generate_data
 
 run:
-	$(PYTHON) -m uvicorn app.main:app --reload --port 8000
+	$(PYTHON) -m uvicorn --factory app.main:create_app --reload --port 8000
 
 test:
 	$(PYTHON) -m pytest --cov --cov-report=term-missing

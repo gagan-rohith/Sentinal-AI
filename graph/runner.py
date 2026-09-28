@@ -14,6 +14,8 @@ from core.exceptions import InvalidStateError, SentinelError
 from core.models import Incident
 from graph.incident_graph import RECURSION_LIMIT, build_incident_graph
 from graph.state import AgentDeps, IncidentState, Stage
+from observability.metrics import record_approval, record_run
+from observability.tracing import current_trace_id, new_trace_id
 from storage.approvals import ApprovalStore
 from storage.runs import RunRecord, RunRepository
 
@@ -23,7 +25,14 @@ GraphInput = IncidentState | Command[Any]
 
 
 def _config(run_id: str) -> RunnableConfig:
-    return {"configurable": {"thread_id": run_id}, "recursion_limit": RECURSION_LIMIT}
+    # run_name, tags and metadata label the LangSmith trace when tracing is enabled.
+    return {
+        "configurable": {"thread_id": run_id},
+        "recursion_limit": RECURSION_LIMIT,
+        "run_name": "incident_analysis",
+        "tags": ["sentinel-ai"],
+        "metadata": {"run_id": run_id, "trace_id": current_trace_id()},
+    }
 
 
 class IncidentAnalyzer:
@@ -46,7 +55,12 @@ class IncidentAnalyzer:
 
     async def start(self, incident: Incident, requested_by: str) -> RunRecord:
         run = await self.runs.create(incident.incident_id, requested_by)
-        initial: IncidentState = {"run_id": run.run_id, "incident": incident, "stage": Stage.START}
+        initial: IncidentState = {
+            "run_id": run.run_id,
+            "trace_id": current_trace_id() or new_trace_id(),
+            "incident": incident,
+            "stage": Stage.START,
+        }
         self._spawn(run.run_id, initial)
         return run
 
@@ -84,6 +98,7 @@ class IncidentAnalyzer:
         )
         next_stage = "action_execution" if approved else "postmortem"
         await self.runs.update(run_id, status=RunStatus.RUNNING, stage=next_stage)
+        record_approval(approved)
         log.info("approval_decided", run_id=run_id, approved=approved, by=principal.subject)
         self._spawn(run_id, Command(resume=decision.model_dump(mode="json")))
         return await self.runs.get(run_id)
@@ -94,6 +109,11 @@ class IncidentAnalyzer:
         task.add_done_callback(lambda _: self._tasks.pop(run_id, None))
 
     async def _drive(self, run_id: str, graph_input: GraphInput) -> None:
+        # Every log line from this run, including agent and tool logs, carries run_id.
+        with structlog.contextvars.bound_contextvars(run_id=run_id):
+            await self._drive_run(run_id, graph_input)
+
+    async def _drive_run(self, run_id: str, graph_input: GraphInput) -> None:
         config = _config(run_id)
         await self.runs.update(run_id, status=RunStatus.RUNNING)
         try:
@@ -109,20 +129,26 @@ class IncidentAnalyzer:
             snapshot = await self.graph.aget_state(config)
             if snapshot.next:
                 await self._pause(run_id, snapshot.tasks)
+                record_run("awaiting_approval")
                 return
-            await self.runs.complete(run_id, snapshot.values["final_report"])
-            log.info("run_completed", run_id=run_id)
+            report = snapshot.values["final_report"]
+            await self.runs.complete(run_id, report)
+            record_run("completed", report.retries)
+            log.info("run_completed", retries=report.retries, mode=report.mode)
         except asyncio.CancelledError:
             await self.runs.fail(run_id, "cancelled", "the service shut down during the run")
+            record_run("failed")
             raise
         except SentinelError as exc:
-            log.warning("run_failed", run_id=run_id, code=exc.code, error=exc.message)
+            log.warning("run_failed", code=exc.code, error=exc.message)
             await self.runs.fail(run_id, exc.code, exc.message)
+            record_run("failed")
         except Exception as exc:
             # A background task has no caller to raise to; record the failure and keep
             # the traceback in the logs.
-            log.exception("run_crashed", run_id=run_id)
+            log.exception("run_crashed")
             await self.runs.fail(run_id, "internal_error", f"{type(exc).__name__}: {exc}")
+            record_run("failed")
 
     async def _pause(self, run_id: str, tasks: Any) -> None:
         interrupts = [i for task in tasks for i in task.interrupts]

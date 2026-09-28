@@ -12,14 +12,11 @@ Search backend and embedder come from settings (.env).
 
 import argparse
 import asyncio
-import logging
 import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
-
-import structlog
 
 from agents.llm import AnthropicLLM, StructuredLLM
 from app.config import Settings, get_settings
@@ -30,6 +27,7 @@ from evals.datasets import load_incident_cases, load_qa_cases
 from evals.report import BenchmarkReport, BenchmarkSetup, write_report
 from evals.retrieval_eval import evaluate_retrieval
 from graph.state import AgentDeps
+from observability.logging import configure_logging
 from retrieval.factory import create_search_backend, embedder_from_settings
 from retrieval.hybrid_search import HybridSearcher
 from retrieval.indexing import build_documents, ingest
@@ -151,8 +149,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Per-tool-call logs would drown the summary; keep warnings and errors only.
-    logging.basicConfig(level=logging.WARNING)
-    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.WARNING))
+    configure_logging("WARNING", "console")
 
     report = asyncio.run(
         run_benchmark(

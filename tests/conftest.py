@@ -1,4 +1,5 @@
 import asyncio
+import os
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 
@@ -19,6 +20,23 @@ from retrieval.models import SearchDocument
 from storage.db import Database
 from storage.incidents import IncidentRepository
 from tools.backend import SimulatedOpsBackend
+
+
+@pytest.fixture(autouse=True, scope="session")
+def no_external_tracing() -> Iterator[None]:
+    """Tests must never send traces anywhere, whatever the developer's shell has set."""
+    names = ("LANGSMITH_TRACING", "LANGSMITH_API_KEY", "LANGCHAIN_TRACING_V2", "LANGCHAIN_API_KEY")
+    saved = {name: os.environ.get(name) for name in names}
+    for name in names:
+        os.environ.pop(name, None)
+    os.environ["LANGSMITH_TRACING"] = "false"
+    yield
+    for name, value in saved.items():
+        if value is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = value
+
 
 KEYS = {
     Role.VIEWER: "test-viewer-key",
@@ -63,6 +81,7 @@ def settings(tmp_path: Path) -> Settings:
         search_backend="memory",
         embedding_provider="hash",
         eval_reports_dir=tmp_path / "reports",
+        langsmith_api_key=None,
         _env_file=None,  # type: ignore[call-arg]
     )
 

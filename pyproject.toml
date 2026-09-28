@@ -23,6 +23,8 @@ dependencies = [
     "langgraph-checkpoint-sqlite>=3.0",
     "anthropic>=1.8",
     "mcp>=2.2,<3",
+    "prometheus-client>=0.20",
+    "langsmith>=0.14",
 ]
 
 [project.optional-dependencies]
@@ -86,8 +88,8 @@ addopts = "-ra"
 
 [tool.coverage.run]
 source = [
-    "agents", "app", "auth", "core", "data", "evals", "graph", "mcp_server", "retrieval",
-    "storage", "tools",
+    "agents", "app", "auth", "core", "data", "evals", "graph", "mcp_server", "observability",
+    "retrieval", "storage", "tools",
 ]
 omit = ["*/__main__.py"]
 

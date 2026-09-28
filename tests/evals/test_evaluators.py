@@ -10,7 +10,7 @@ from evals.evaluators import (
     recall_at_k,
     reciprocal_rank,
 )
-from evals.pricing import estimate_cost
+from observability.costs import estimate_cost
 
 
 def test_recall_at_k() -> None:

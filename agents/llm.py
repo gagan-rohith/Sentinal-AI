@@ -5,10 +5,12 @@ from typing import Protocol, TypeVar
 
 import anthropic
 import structlog
+from langsmith import trace
 from pydantic import BaseModel, ValidationError
 
 from agents.schemas import AgentCall
 from core.exceptions import LLMUnavailableError
+from observability.metrics import record_agent_call
 
 log = structlog.get_logger(__name__)
 
@@ -43,6 +45,27 @@ class AnthropicLLM:
         self._client = anthropic.AsyncAnthropic(api_key=api_key, timeout=timeout_s, max_retries=2)
 
     async def generate(self, schema: type[T], system: str, prompt: str) -> tuple[T, Usage]:
+        # Explicit LangSmith span: the SDK wrapper does not cover messages.parse.
+        async with trace(
+            f"claude.{schema.__name__}",
+            run_type="llm",
+            inputs={"system": system, "prompt": prompt},
+            metadata={"ls_provider": "anthropic", "ls_model_name": self.model},
+        ) as span:
+            result, usage = await self._generate(schema, system, prompt)
+            span.end(
+                outputs={
+                    "output": result.model_dump(mode="json"),
+                    "usage_metadata": {
+                        "input_tokens": usage.input_tokens,
+                        "output_tokens": usage.output_tokens,
+                        "total_tokens": usage.input_tokens + usage.output_tokens,
+                    },
+                }
+            )
+            return result, usage
+
+    async def _generate(self, schema: type[T], system: str, prompt: str) -> tuple[T, Usage]:
         try:
             response = await self._client.messages.parse(
                 model=self.model,
@@ -81,8 +104,29 @@ async def run_step(
     """Run one agent step with Claude, or with the deterministic heuristic.
 
     A failed Claude call falls back to the heuristic and is recorded as mode="fallback",
-    so degraded runs are visible in the report and the benchmark.
+    so degraded runs are visible in the report, the metrics and the benchmark.
     """
+    result, call = await _run_step(agent, llm, schema, system, prompt, heuristic)
+    record_agent_call(call)
+    log.info(
+        "agent_step",
+        agent=agent,
+        mode=call.mode,
+        latency_ms=call.latency_ms,
+        input_tokens=call.input_tokens,
+        output_tokens=call.output_tokens,
+    )
+    return result, call
+
+
+async def _run_step(
+    agent: str,
+    llm: StructuredLLM | None,
+    schema: type[T],
+    system: str,
+    prompt: Callable[[], str],
+    heuristic: Callable[[], T],
+) -> tuple[T, AgentCall]:
     started = time.perf_counter()
 
     def elapsed() -> float:

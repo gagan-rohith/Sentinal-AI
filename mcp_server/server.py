@@ -15,7 +15,6 @@ permission checks, input validation, timeouts and the approval gate are identica
 import argparse
 import asyncio
 import json
-import logging
 import os
 import sys
 from collections.abc import Mapping
@@ -47,6 +46,7 @@ from mcp_server.schemas import (
     Title,
     TopK,
 )
+from observability.logging import configure_logging
 from tools.common import ActionResult
 from tools.deployments import DeploymentStatusResult
 from tools.logs import LogsResult
@@ -189,12 +189,6 @@ def build_server(
     return server
 
 
-def _log_to_stderr() -> None:
-    # stdout carries the MCP protocol over stdio; anything else written there corrupts it.
-    logging.basicConfig(stream=sys.stderr, level=logging.INFO, force=True)
-    structlog.configure(logger_factory=structlog.PrintLoggerFactory(file=sys.stderr))
-
-
 async def _serve(transport: str, host: str, port: int) -> None:
     from app.config import get_settings
     from app.container import Container
@@ -216,7 +210,8 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
-    _log_to_stderr()
+    # stdout carries the MCP protocol over stdio; anything else written there corrupts it.
+    configure_logging("INFO", "json", stream=sys.stderr)
     asyncio.run(_serve(args.transport, args.host, args.port))
 
 

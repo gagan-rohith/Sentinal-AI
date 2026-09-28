@@ -8,6 +8,7 @@ from functools import partial
 from typing import Any, Protocol
 
 import structlog
+from langsmith import trace
 from pydantic import BaseModel, ValidationError
 
 from auth.permissions import Principal
@@ -22,6 +23,7 @@ from core.exceptions import (
 )
 from core.models import ServiceHealth
 from data.loader import load_runbooks
+from observability.metrics import record_tool_call
 from retrieval.hybrid_search import HybridSearcher
 from tools.backend import SimulatedOpsBackend
 from tools.common import ActionResult, WindowQuery
@@ -132,6 +134,25 @@ class ToolRegistry:
         approval_id: str | None = None,
         recorder: list[ToolCallRecord] | None = None,
     ) -> ToolResult:
+        # A LangSmith span per tool call; a no-op unless tracing is configured.
+        async with trace(
+            name, run_type="tool", inputs=dict(arguments), metadata={"principal": principal.subject}
+        ) as span:
+            result = await self._invoke(
+                name, arguments, principal, approval_id=approval_id, recorder=recorder
+            )
+            span.end(outputs=result.output.model_dump(mode="json"))
+            return result
+
+    async def _invoke(
+        self,
+        name: str,
+        arguments: Mapping[str, Any],
+        principal: Principal,
+        *,
+        approval_id: str | None,
+        recorder: list[ToolCallRecord] | None,
+    ) -> ToolResult:
         spec = self.get(name)
         started_at = datetime.now(UTC)
         started = time.perf_counter()
@@ -148,6 +169,7 @@ class ToolRegistry:
             )
             if recorder is not None:
                 recorder.append(entry)
+            record_tool_call(name, status.value, entry.latency_ms)
             log.info(
                 "tool_call",
                 tool=name,
