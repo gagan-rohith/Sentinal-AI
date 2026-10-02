@@ -25,7 +25,14 @@ from tools.backend import SimulatedOpsBackend
 @pytest.fixture(autouse=True, scope="session")
 def no_external_tracing() -> Iterator[None]:
     """Tests must never send traces anywhere, whatever the developer's shell has set."""
-    names = ("LANGSMITH_TRACING", "LANGSMITH_API_KEY", "LANGCHAIN_TRACING_V2", "LANGCHAIN_API_KEY")
+    names = (
+        "LANGSMITH_TRACING",
+        "LANGSMITH_API_KEY",
+        "LANGCHAIN_TRACING_V2",
+        "LANGCHAIN_API_KEY",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "OTEL_TRACES_EXPORTER",
+    )
     saved = {name: os.environ.get(name) for name in names}
     for name in names:
         os.environ.pop(name, None)

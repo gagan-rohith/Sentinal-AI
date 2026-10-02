@@ -22,8 +22,8 @@ log = structlog.get_logger(__name__)
 
 HEADER = "X-API-Key"
 SCHEME = "apiKey"
-# Discovery and liveness stay open; everything else, including JSON-RPC, needs a key.
-PUBLIC_PATHS = frozenset({AGENT_CARD_WELL_KNOWN_PATH, "/health"})
+# Discovery, liveness and metrics stay open, as on the API; JSON-RPC needs a key.
+PUBLIC_PATHS = frozenset({AGENT_CARD_WELL_KNOWN_PATH, "/health", "/metrics"})
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 

@@ -12,6 +12,8 @@ from a2a.client.auth import AuthInterceptor, CredentialService
 from a2a.client.interceptors import ClientCallInterceptor
 from a2a.helpers import get_data_parts, get_message_text, new_data_message
 from a2a.types import AgentCard, Role, SendMessageRequest, Task, TaskState
+from opentelemetry import trace
+from opentelemetry.trace import SpanKind, Status, StatusCode
 
 from agents.critic_agent import apply_review, unavailable_update
 from core.exceptions import CriticUnavailableError
@@ -24,6 +26,7 @@ from critic_service.contract import (
 )
 from graph.state import AgentDeps, IncidentState
 from observability.metrics import record_agent_call
+from observability.otel import inject_trace_context, run_trace
 
 log = structlog.get_logger(__name__)
 
@@ -94,6 +97,10 @@ class A2ACriticClient:
 
     async def _review(self, request: ReviewRequest) -> ReviewResult:
         http = self._http_factory()
+        http.event_hooks = {
+            **http.event_hooks,
+            "request": [*http.event_hooks["request"], inject_trace_context],
+        }
         client: Any = None
         try:
             card = self._card or await self._resolve_card(http)
@@ -123,11 +130,27 @@ class A2ACriticClient:
 async def remote_critic_node(deps: AgentDeps, state: IncidentState) -> dict[str, Any]:
     if deps.critic is None:
         raise RuntimeError("remote_critic_node needs AgentDeps.critic")
-    try:
-        result = await deps.critic.review(ReviewRequest.from_state(state))
-    except CriticUnavailableError as exc:
-        log.warning("critic_unavailable", error=exc.message)
-        return unavailable_update(exc.message)
+    request = ReviewRequest.from_state(state)
+    tracer = trace.get_tracer(__name__)
+    with (
+        run_trace(state.get("trace_id")),
+        tracer.start_as_current_span(
+            "critic.review_remediation_plan",
+            kind=SpanKind.CLIENT,
+            attributes={
+                "sentinel.run_id": state.get("run_id", ""),
+                "sentinel.incident_id": request.incident_id,
+                "sentinel.retry_count": state.get("retry_count", 0),
+            },
+        ) as span,
+    ):
+        try:
+            result = await deps.critic.review(request)
+        except CriticUnavailableError as exc:
+            span.set_status(Status(StatusCode.ERROR, exc.message))
+            log.warning("critic_unavailable", error=exc.message)
+            return unavailable_update(exc.message)
+        span.set_attribute("sentinel.critic.verdict", result.verdict.value)
     # The service records the call in its own metrics; record it here too, so the
     # orchestrator's /metrics still covers every agent step of its runs.
     record_agent_call(result.agent_call)

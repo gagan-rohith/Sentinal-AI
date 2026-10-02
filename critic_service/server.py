@@ -13,15 +13,22 @@ from pydantic_settings import SettingsConfigDict
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
 from agents.llm import StructuredLLM
 from app.config import Settings
 from app.container import create_llm
-from critic_service.auth import ApiKeyMiddleware, parse_key_hashes, security_fields
+from critic_service.auth import (
+    PUBLIC_PATHS,
+    ApiKeyMiddleware,
+    parse_key_hashes,
+    security_fields,
+)
 from critic_service.contract import MEDIA_TYPE, SKILL_ID
 from critic_service.executor import CriticAgentExecutor
+from observability.metrics import render
+from observability.otel import TraceContextMiddleware
 from retrieval.backend import InMemoryBackend
 from retrieval.embeddings import HashEmbedder
 from retrieval.hybrid_search import HybridSearcher
@@ -88,6 +95,11 @@ async def health(_: Request) -> JSONResponse:
     return JSONResponse({"status": "ok", "version": VERSION})
 
 
+async def metrics(_: Request) -> Response:
+    body, content_type = render()
+    return Response(body, media_type=content_type)
+
+
 def create_app(
     settings: CriticSettings | None = None,
     *,
@@ -104,9 +116,17 @@ def create_app(
     handler = DefaultRequestHandler(
         agent_executor=executor, task_store=InMemoryTaskStore(), agent_card=card
     )
-    routes = [Route("/health", health, methods=["GET"])]
+    routes = [
+        Route("/health", health, methods=["GET"]),
+        Route("/metrics", metrics, methods=["GET"]),
+    ]
     routes.extend(create_agent_card_routes(card))
     routes.extend(create_jsonrpc_routes(handler, "/"))
     return Starlette(
-        routes=routes, middleware=[Middleware(ApiKeyMiddleware, key_hashes=key_hashes)]
+        routes=routes,
+        middleware=[
+            # Outermost first: rejected requests are traced too.
+            Middleware(TraceContextMiddleware, skip_paths=PUBLIC_PATHS),
+            Middleware(ApiKeyMiddleware, key_hashes=key_hashes),
+        ],
     )

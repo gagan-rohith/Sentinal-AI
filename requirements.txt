@@ -17,4 +17,6 @@ mcp>=2.2,<3
 prometheus-client>=0.20
 langsmith>=0.14
 a2a-sdk[http-server,telemetry]>=1.1,<2
+opentelemetry-sdk>=1.30,<2
+opentelemetry-exporter-otlp-proto-http>=1.30,<2
 sentence-transformers>=6.0

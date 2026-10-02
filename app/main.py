@@ -12,6 +12,7 @@ from app.container import Container
 from core.exceptions import SentinelError
 from observability.langsmith import configure_langsmith
 from observability.logging import configure_logging
+from observability.otel import configure_tracing
 from observability.tracing import TraceMiddleware, current_trace_id
 
 log = structlog.get_logger(__name__)
@@ -26,12 +27,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level, settings.log_format)
     langsmith_enabled = configure_langsmith(settings.langsmith_api_key, settings.langsmith_project)
+    otel_enabled = configure_tracing("sentinel-api")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         container = await Container.create(settings)
         app.state.container = container
-        log.info("startup", environment=settings.app_env, langsmith=langsmith_enabled)
+        log.info(
+            "startup",
+            environment=settings.app_env,
+            langsmith=langsmith_enabled,
+            opentelemetry=otel_enabled,
+        )
         try:
             yield
         finally:

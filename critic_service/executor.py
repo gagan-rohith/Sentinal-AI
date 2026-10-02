@@ -5,6 +5,7 @@ from a2a.helpers import get_data_parts, new_data_part, new_task_from_user_messag
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
+from opentelemetry import trace
 from pydantic import ValidationError
 
 from agents.critic_agent import review_plan
@@ -47,9 +48,15 @@ class CriticAgentExecutor(AgentExecutor):
             return
 
         await updater.start_work()
+        tracer = trace.get_tracer(__name__)
         try:
-            state = cast(IncidentState, request.as_state())
-            review, call = await review_plan(state, self.registry, self.llm)
+            with tracer.start_as_current_span(
+                "critic.review_plan", attributes={"sentinel.incident_id": request.incident_id}
+            ) as span:
+                state = cast(IncidentState, request.as_state())
+                review, call = await review_plan(state, self.registry, self.llm)
+                span.set_attribute("sentinel.critic.verdict", review.verdict.value)
+                span.set_attribute("sentinel.critic.mode", call.mode)
         except Exception as exc:
             log.exception("critic_review_failed", incident_id=request.incident_id)
             await updater.failed(new_text_message(f"review failed: {type(exc).__name__}: {exc}"))
