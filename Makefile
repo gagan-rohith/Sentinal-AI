@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install data index bench demo run test lint format typecheck check up down logs
+.PHONY: install data index bench demo record-demo run test lint format typecheck check up down logs
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -17,6 +17,10 @@ bench:
 # Terminal walkthrough of INC-1060. ARGS=--memory skips Elasticsearch, ARGS="--pause 2" slows it for recording.
 demo:
 	$(PYTHON) -m app.demo $(ARGS)
+
+# Record real runs for the replay site (frontend/public/demo).
+record-demo:
+	$(PYTHON) -m app.record_demo $(ARGS)
 
 run:
 	$(PYTHON) -m uvicorn --factory app.main:create_app --reload --port 8000

@@ -11,6 +11,8 @@ role to approve it.
 [![docker](https://github.com/gagan-rohith/sentinel-ai/actions/workflows/docker.yml/badge.svg)](https://github.com/gagan-rohith/sentinel-ai/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+**Live demo:** https://gagan-rohith.github.io/sentinel-ai/ (a replay of recorded runs, see below)
+
 **Demo video:** _coming soon_
 
 ![Overview dashboard](docs/images/overview.png)
@@ -57,8 +59,11 @@ three hours earlier, which is the obvious suspect.
 |---|---|
 | ![Approval panel](docs/images/approval.png) | ![Hypotheses in the report](docs/images/report.png) |
 
-To see the whole flow in a terminal without any setup beyond Python: `make demo ARGS=--memory`.
-The [demo guide](docs/DEMO.md) walks through it in the web UI, the terminal and Claude Desktop.
+The [live demo](https://gagan-rohith.github.io/sentinel-ai/) is this web UI built in replay
+mode: every run, approval request and report on it was produced by the real system with
+`make record-demo` and is played back in the browser, so it needs no server. To run the system
+itself in a terminal without any setup beyond Python: `make demo ARGS=--memory`. The
+[demo guide](docs/DEMO.md) covers the web UI, the terminal and Claude Desktop.
 
 ## Architecture
 

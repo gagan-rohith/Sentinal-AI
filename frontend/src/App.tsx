@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 
-import { api, ApiError, type Incident, type RunRecord } from "./api";
+import { api, ApiError, DEMO, type Incident, type RunRecord } from "./api";
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { IncidentDetails } from "./components/IncidentDetails";
 import { IncidentList } from "./components/IncidentList";
 import { ReportView } from "./components/ReportView";
 import { StagePipeline } from "./components/StagePipeline";
+import { DEMO_KEYS } from "./demo/replay";
 import { useRun } from "./useRun";
 import { Overview } from "./views/Overview";
 
 const KEY_STORAGE = "sentinel.apiKey";
+const REPO_URL = "https://github.com/gagan-rohith/sentinel-ai";
+const WALKTHROUGH_INCIDENT = "INC-1060";
 
 type View = "overview" | "incidents";
 
@@ -31,7 +34,7 @@ function saveKey(key: string) {
 }
 
 export function App() {
-  const [apiKey, setApiKey] = useState(readKey);
+  const [apiKey, setApiKey] = useState(DEMO ? DEMO_KEYS.operator : readKey);
   const [draftKey, setDraftKey] = useState("");
   const [editingKey, setEditingKey] = useState(false);
   const [view, setView] = useState<View>("overview");
@@ -77,7 +80,14 @@ export function App() {
     void run.open(record.run_id);
   };
 
-  const healthTone = health === "ok" ? "good" : health === "checking" ? "neutral" : "critical";
+  const walkthrough = () => {
+    setView("incidents");
+    setSelectedId(WALKTHROUGH_INCIDENT);
+    run.reset();
+  };
+
+  const healthTone =
+    health === "ok" || health === "replay" ? "good" : health === "checking" ? "neutral" : "critical";
 
   return (
     <div className="app">
@@ -100,9 +110,24 @@ export function App() {
           ))}
         </nav>
         <span className={`status tone-${healthTone}`} title="API health">
-          API {health}
+          {DEMO ? "Replay" : `API ${health}`}
         </span>
-        {apiKey && !editingKey ? (
+        {DEMO ? (
+          <div className="role-switch" role="group" aria-label="Acting as">
+            <span className="muted small">Acting as</span>
+            {(["operator", "admin"] as const).map((role) => (
+              <button
+                key={role}
+                type="button"
+                className={apiKey === DEMO_KEYS[role] ? "seg active" : "seg"}
+                aria-pressed={apiKey === DEMO_KEYS[role]}
+                onClick={() => setApiKey(DEMO_KEYS[role])}
+              >
+                {role === "operator" ? "Operator" : "Admin"}
+              </button>
+            ))}
+          </div>
+        ) : apiKey && !editingKey ? (
           <button type="button" className="secondary small" onClick={() => setEditingKey(true)}>
             Change key
           </button>
@@ -130,6 +155,24 @@ export function App() {
       </header>
 
       <main className="page">
+        {DEMO && (
+          <div className="callout demo-banner">
+            <p>
+              <strong>This is a replay of real runs.</strong> Every analysis, approval request and
+              report on this page was produced by SentinelAI and recorded. Your clicks play the
+              recordings back in the browser; there is no server behind this page. Operators can
+              analyze and reject; only admins can approve production changes.
+            </p>
+            <div className="actions">
+              <button type="button" onClick={walkthrough}>
+                Walk through {WALKTHROUGH_INCIDENT}
+              </button>
+              <a className="button secondary" href={REPO_URL} target="_blank" rel="noreferrer">
+                Source on GitHub
+              </a>
+            </div>
+          </div>
+        )}
         {!apiKey && (
           <p className="callout">
             Paste an operator key to analyze incidents, or an admin key to also approve actions.
@@ -172,7 +215,16 @@ export function App() {
                     </p>
                   )}
                   {run.approval && run.run?.status === "awaiting_approval" && (
-                    <ApprovalPanel approval={run.approval} busy={run.busy} onDecide={run.decide} />
+                    <ApprovalPanel
+                      approval={run.approval}
+                      busy={run.busy}
+                      onDecide={run.decide}
+                      hint={
+                        DEMO
+                          ? "Approving needs the Admin role: switch at the top. Either role can reject."
+                          : undefined
+                      }
+                    />
                   )}
                   {run.report && <ReportView report={run.report} reported={selected.severity} />}
                 </>

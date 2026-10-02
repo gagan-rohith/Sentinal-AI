@@ -7,9 +7,10 @@ interface Props {
   approval: ApprovalRecord;
   busy: boolean;
   onDecide: (approve: boolean, text: string) => void;
+  hint?: string;
 }
 
-export function ApprovalPanel({ approval, busy, onDecide }: Props) {
+export function ApprovalPanel({ approval, busy, onDecide, hint }: Props) {
   const [text, setText] = useState("");
   const { request } = approval;
   return (
@@ -72,7 +73,9 @@ export function ApprovalPanel({ approval, busy, onDecide }: Props) {
           Reject
         </button>
       </div>
-      <p className="muted small">Approving needs an admin key; rejecting needs operator or above.</p>
+      <p className="muted small">
+        {hint ?? "Approving needs an admin key; rejecting needs operator or above."}
+      </p>
     </section>
   );
 }

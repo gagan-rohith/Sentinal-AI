@@ -14,6 +14,29 @@ There is also a deploy three hours earlier, which is the obvious suspect. The ag
 - refuse the approval from an operator, accept it from an admin, execute, and write the
   postmortem.
 
+## Live replay site
+
+https://gagan-rohith.github.io/sentinel-ai/ is the same web UI built in replay mode. Every
+incident has a recorded run; runs that pause for approval were recorded twice, approved and
+rejected, so either decision plays back what the system actually did. The role switch at the
+top stands in for API keys, and the role rules match the API: approving as an operator returns
+the same 403.
+
+To refresh the recordings after changing the agents (Elasticsearch running, as for the
+benchmark):
+
+```bash
+make record-demo        # writes frontend/public/demo
+```
+
+Commit the result; the `pages` workflow rebuilds the site on every push to `main` that
+touches `frontend/`. To preview locally:
+
+```bash
+cd frontend
+VITE_DEMO=1 npm run dev
+```
+
 ## In the web UI
 
 1. Start Docker Desktop, then the stack with the web UI:

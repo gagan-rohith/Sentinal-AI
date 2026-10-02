@@ -5,6 +5,8 @@ import { defineConfig } from "vite";
 // browser only ever talks to one origin. The Docker image does the same with nginx.
 export default defineConfig({
   plugins: [react()],
+  // The demo site is served from a subpath on GitHub Pages, for example /sentinel-ai/.
+  base: process.env.SENTINEL_BASE_PATH ?? "/",
   server: {
     port: 5173,
     proxy: {
