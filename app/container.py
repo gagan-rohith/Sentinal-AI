@@ -104,8 +104,15 @@ class Container:
 def _remote_critic(settings: Settings) -> A2ACriticClient | None:
     if settings.critic_mode != "a2a":
         return None
+    if settings.critic_api_key is None or not settings.critic_api_key.get_secret_value():
+        # A configuration mistake, not an outage: fail at startup rather than on every run.
+        raise ValueError("CRITIC_MODE=a2a needs CRITIC_API_KEY; see python -m critic_service.keys")
     log.info("critic_mode_a2a", url=settings.critic_url)
-    return A2ACriticClient(settings.critic_url, timeout_s=settings.critic_timeout_seconds)
+    return A2ACriticClient(
+        settings.critic_url,
+        api_key=settings.critic_api_key.get_secret_value(),
+        timeout_s=settings.critic_timeout_seconds,
+    )
 
 
 def create_llm(settings: Settings) -> StructuredLLM | None:

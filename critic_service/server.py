@@ -1,7 +1,8 @@
 """The critic as a standalone A2A service.
 
 Run with: python -m critic_service
-The Agent Card is served at /.well-known/agent-card.json and JSON-RPC at /.
+The Agent Card is served at /.well-known/agent-card.json and JSON-RPC at /. Every request
+except the card and /health needs an API key in the X-API-Key header (see critic_service.auth).
 """
 
 from a2a.server.request_handlers import DefaultRequestHandler
@@ -10,6 +11,7 @@ from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCapabilities, AgentCard, AgentInterface, AgentSkill
 from pydantic_settings import SettingsConfigDict
 from starlette.applications import Starlette
+from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
@@ -17,6 +19,7 @@ from starlette.routing import Route
 from agents.llm import StructuredLLM
 from app.config import Settings
 from app.container import create_llm
+from critic_service.auth import ApiKeyMiddleware, parse_key_hashes, security_fields
 from critic_service.contract import MEDIA_TYPE, SKILL_ID
 from critic_service.executor import CriticAgentExecutor
 from retrieval.backend import InMemoryBackend
@@ -38,6 +41,8 @@ class CriticSettings(Settings):
     critic_port: int = 8100
     # The URL clients reach the service on, advertised in the Agent Card.
     critic_public_url: str = "http://localhost:8100"
+    # SHA-256 hashes of accepted API keys, comma separated. Required.
+    critic_api_key_sha256: str = ""
 
 
 def build_agent_card(public_url: str) -> AgentCard:
@@ -64,6 +69,7 @@ def build_agent_card(public_url: str) -> AgentCard:
             AgentInterface(protocol_binding="JSONRPC", url=public_url, protocol_version="1.0")
         ],
         skills=[skill],
+        **security_fields(),  # type: ignore[arg-type]
     )
 
 
@@ -89,6 +95,7 @@ def create_app(
     llm: StructuredLLM | None = None,
 ) -> Starlette:
     settings = settings or CriticSettings()
+    key_hashes = parse_key_hashes(settings.critic_api_key_sha256)
     card = build_agent_card(settings.critic_public_url)
     executor = CriticAgentExecutor(
         registry or validation_registry(settings),
@@ -100,4 +107,6 @@ def create_app(
     routes = [Route("/health", health, methods=["GET"])]
     routes.extend(create_agent_card_routes(card))
     routes.extend(create_jsonrpc_routes(handler, "/"))
-    return Starlette(routes=routes)
+    return Starlette(
+        routes=routes, middleware=[Middleware(ApiKeyMiddleware, key_hashes=key_hashes)]
+    )

@@ -7,7 +7,9 @@ from typing import Any
 
 import httpx
 import structlog
-from a2a.client import A2ACardResolver, ClientConfig, create_client
+from a2a.client import A2ACardResolver, ClientCallContext, ClientConfig, create_client
+from a2a.client.auth import AuthInterceptor, CredentialService
+from a2a.client.interceptors import ClientCallInterceptor
 from a2a.helpers import get_data_parts, get_message_text, new_data_message
 from a2a.types import AgentCard, Role, SendMessageRequest, Task, TaskState
 
@@ -26,6 +28,18 @@ from observability.metrics import record_agent_call
 log = structlog.get_logger(__name__)
 
 HttpFactory = Callable[[], httpx.AsyncClient]
+
+
+class StaticKey(CredentialService):
+    """Supplies the critic API key for the security scheme the Agent Card declares."""
+
+    def __init__(self, key: str) -> None:
+        self._key = key
+
+    async def get_credentials(
+        self, security_scheme_name: str, context: ClientCallContext | None
+    ) -> str | None:
+        return self._key
 
 
 def result_from_task(task: Task | None) -> ReviewResult:
@@ -47,9 +61,18 @@ class A2ACriticClient:
     """Delegates review_remediation_plan to the critic service over A2A (JSON-RPC)."""
 
     def __init__(
-        self, url: str, *, timeout_s: float = 10.0, http_factory: HttpFactory | None = None
+        self,
+        url: str,
+        *,
+        api_key: str | None = None,
+        timeout_s: float = 10.0,
+        http_factory: HttpFactory | None = None,
     ) -> None:
         self.url = url.rstrip("/")
+        # The SDK's interceptor sends the key as the card's security scheme asks.
+        self._interceptors: list[ClientCallInterceptor] = (
+            [AuthInterceptor(StaticKey(api_key))] if api_key else []
+        )
         self.timeout_s = timeout_s
         self._http_factory = http_factory or (lambda: httpx.AsyncClient(timeout=timeout_s))
         self._card: AgentCard | None = None
@@ -74,7 +97,9 @@ class A2ACriticClient:
         client: Any = None
         try:
             card = self._card or await self._resolve_card(http)
-            client = await create_client(card, ClientConfig(streaming=False, httpx_client=http))
+            client = await create_client(
+                card, ClientConfig(streaming=False, httpx_client=http), self._interceptors
+            )
             message = new_data_message(
                 request.model_dump(mode="json"), media_type=MEDIA_TYPE, role=Role.ROLE_USER
             )

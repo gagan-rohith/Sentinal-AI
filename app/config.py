@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     critic_mode: Literal["local", "a2a"] = "local"
     critic_url: str = "http://localhost:8100"
     critic_timeout_seconds: float = Field(default=10.0, gt=0)
+    # Sent to the critic service; it holds only the hash (CRITIC_API_KEY_SHA256).
+    critic_api_key: SecretStr | None = None
 
     eval_reports_dir: Path = Path("evals/reports")
 
