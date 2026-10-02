@@ -21,13 +21,14 @@ def manifests() -> list[dict[str, Any]]:
     return docs
 
 
-def containers(kind: str) -> list[dict[str, Any]]:
-    return [
-        c
-        for d in manifests()
-        if d["kind"] == kind
-        for c in d["spec"]["template"]["spec"]["containers"]
-    ]
+def resource(kind: str, name: str) -> dict[str, Any]:
+    [doc] = [d for d in manifests() if d["kind"] == kind and d["metadata"]["name"] == name]
+    return doc
+
+
+def container(deployment: str) -> dict[str, Any]:
+    [only] = resource("Deployment", deployment)["spec"]["template"]["spec"]["containers"]
+    return only
 
 
 def test_every_resource_is_namespaced_and_labelled() -> None:
@@ -39,7 +40,7 @@ def test_every_resource_is_namespaced_and_labelled() -> None:
 
 
 def test_api_has_probes_limits_and_hardening() -> None:
-    [api] = containers("Deployment")
+    api = container("sentinel-api")
     for probe in ("startupProbe", "readinessProbe", "livenessProbe"):
         assert api[probe]["httpGet"]["path"] == "/health"
     assert set(api["resources"]) == {"requests", "limits"}
@@ -49,27 +50,43 @@ def test_api_has_probes_limits_and_hardening() -> None:
     assert mounts == {"/data", "/tmp"}
 
 
+def test_critic_is_hardened_and_stateless() -> None:
+    critic = container("sentinel-critic")
+    for probe in ("readinessProbe", "livenessProbe"):
+        assert critic[probe]["httpGet"]["path"] == "/health"
+    assert set(critic["resources"]) == {"requests", "limits"}
+    assert critic["securityContext"]["readOnlyRootFilesystem"] is True
+    assert {m["mountPath"] for m in critic["volumeMounts"]} == {"/tmp"}
+    # Least privilege: the critic gets its own secret, never the API's keys.
+    secrets = {s["secretRef"]["name"] for s in critic["envFrom"] if "secretRef" in s}
+    assert secrets == {"sentinel-critic-secrets"}
+
+
 def test_single_writer_deployment() -> None:
-    [deployment] = [d for d in manifests() if d["kind"] == "Deployment"]
+    deployment = resource("Deployment", "sentinel-api")
     # SQLite on a ReadWriteOnce volume: never two pods at once.
     assert deployment["spec"]["replicas"] == 1
     assert deployment["spec"]["strategy"]["type"] == "Recreate"
 
 
 def test_no_credentials_in_manifests() -> None:
-    [config] = [d for d in manifests() if d["kind"] == "ConfigMap"]
+    config = resource("ConfigMap", "sentinel-config")
     assert not any("KEY" in name for name in config["data"])
-    [secret] = [d for d in manifests() if d["kind"] == "Secret"]
-    values = secret["stringData"]
-    assert values["ANTHROPIC_API_KEY"] == ""
-    assert "<sha256" in values["API_KEYS"]
+    api = resource("Secret", "sentinel-secrets")["stringData"]
+    assert api["ANTHROPIC_API_KEY"] == ""
+    assert "<sha256" in api["API_KEYS"]
+    assert api["CRITIC_API_KEY"].startswith("<")
+    critic = resource("Secret", "sentinel-critic-secrets")["stringData"]
+    assert "<sha256" in critic["CRITIC_API_KEY_SHA256"]
+    assert critic["ANTHROPIC_API_KEY"] == ""
 
 
 def test_config_keys_are_real_settings() -> None:
-    from app.config import Settings
+    from critic_service.server import CriticSettings
 
-    [config] = [d for d in manifests() if d["kind"] == "ConfigMap"]
-    known = {name.upper() for name in Settings.model_fields}
+    # CriticSettings extends the API's Settings, so this covers both services.
+    config = resource("ConfigMap", "sentinel-config")
+    known = {name.upper() for name in CriticSettings.model_fields}
     assert set(config["data"]) <= known
 
 
@@ -79,6 +96,15 @@ def test_compose_api_waits_for_the_index_job() -> None:
     assert api["depends_on"]["ingest"]["condition"] == "service_completed_successfully"
     assert api["environment"]["AUTO_INDEX"] == "false"
     assert compose["services"]["ingest"]["command"][-1] == "--if-stale"
+
+
+def test_compose_api_reviews_plans_through_the_critic_service() -> None:
+    compose = yaml.safe_load((ROOT / "docker" / "docker-compose.yml").read_text(encoding="utf-8"))
+    api = compose["services"]["api"]
+    assert api["environment"]["CRITIC_MODE"] == "a2a"
+    assert api["environment"]["CRITIC_URL"] == "http://critic:8100"
+    assert api["depends_on"]["critic"]["condition"] == "service_healthy"
+    assert compose["services"]["critic"]["environment"]["CRITIC_PUBLIC_URL"] == "http://critic:8100"
 
 
 def test_env_file_never_enters_an_image() -> None:

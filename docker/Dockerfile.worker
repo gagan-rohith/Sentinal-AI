@@ -36,6 +36,7 @@ COPY agents ./agents
 COPY app ./app
 COPY auth ./auth
 COPY core ./core
+COPY critic_service ./critic_service
 COPY data ./data
 COPY graph ./graph
 COPY observability ./observability

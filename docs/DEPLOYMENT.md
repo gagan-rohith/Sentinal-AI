@@ -7,14 +7,17 @@ offline in heuristic mode; Claude and LangSmith switch on only when their keys a
 
 Prerequisites: Docker Desktop, and a `.env` with API keys (copy `.env.example`, then run
 `python -m auth.api_keys operator` and `python -m auth.api_keys admin` and put the two
-`config:` lines in `API_KEYS`).
+`config:` lines in `API_KEYS`), plus the critic key pair from `python -m critic_service.keys`
+(`CRITIC_API_KEY` and `CRITIC_API_KEY_SHA256`, copied as printed).
 
 ```bash
 docker compose up --build
 ```
 
-Start order: Elasticsearch becomes healthy, the `ingest` job builds the search index and
-exits, then the API starts on http://localhost:8000 (docs at `/docs`).
+Start order: Elasticsearch and the critic service become healthy, the `ingest` job builds
+the search index and exits, then the API starts on http://localhost:8000 (docs at `/docs`).
+The API reaches the critic over A2A at http://critic:8100; the critic needs neither
+Elasticsearch nor the embedding model, so its image is small.
 
 The first build takes several minutes: it installs CPU-only PyTorch and bakes the MiniLM
 embedding model into the image, so containers start without network access. Images are
@@ -22,7 +25,7 @@ about 2.4 GB, mostly PyTorch.
 
 | Command | What it adds |
 |---|---|
-| `docker compose --profile observability up` | Prometheus on http://localhost:9090, scraping `/metrics` |
+| `docker compose --profile observability up` | Prometheus on http://localhost:9090, scraping both services' `/metrics`, and Jaeger on http://localhost:16686 (set `OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318` in `.env`) |
 | `docker compose --profile kibana up` | Kibana on http://localhost:5601 |
 | `docker compose run --rm ingest python -m evals.benchmark` | Runs the benchmark inside the stack |
 | `docker compose down` | Stops everything; data volumes are kept |
@@ -45,15 +48,21 @@ Manifests are in `k8s/`. Elasticsearch is not included: point `ELASTICSEARCH_URL
 kubectl apply -f k8s/namespace.yaml
 kubectl -n sentinel create secret generic sentinel-secrets \
   --from-literal=API_KEYS='operator:<sha256>,admin:<sha256>' \
+  --from-literal=CRITIC_API_KEY='<critic key>' \
   --from-literal=ANTHROPIC_API_KEY='' \
   --from-literal=LANGSMITH_API_KEY=''
+kubectl -n sentinel create secret generic sentinel-critic-secrets \
+  --from-literal=CRITIC_API_KEY_SHA256='<sha256 of the critic key>' \
+  --from-literal=ANTHROPIC_API_KEY=''
 kubectl apply -f k8s/configmap.yaml -f k8s/api-pvc.yaml
+kubectl apply -f k8s/critic-deployment.yaml -f k8s/critic-service.yaml
 kubectl apply -f k8s/ingest-job.yaml
 kubectl -n sentinel wait --for=condition=complete job/sentinel-ingest --timeout=10m
 kubectl apply -f k8s/api-deployment.yaml -f k8s/api-service.yaml
 ```
 
-Images are referenced as `sentinel-ai-api:0.1.0` and `sentinel-ai-worker:0.1.0`. For kind or
+Images are referenced as `sentinel-ai-api:0.1.0`, `sentinel-ai-worker:0.1.0` and
+`sentinel-ai-critic:0.1.0`. For kind or
 minikube, build them with those tags and load them into the cluster; otherwise push to a
 registry and change the image fields.
 
@@ -110,7 +119,7 @@ GitHub Actions runs on every push and pull request to `main`:
 |---|---|
 | `lint` | ruff lint and format, mypy strict, `terraform fmt` and `validate`, kubeconform on `k8s/` |
 | `test` | full pytest suite against a real Elasticsearch service container, failing below 80% coverage |
-| `docker` | builds both images (no push) with layer caching |
+| `docker` | builds the api, worker and critic images (no push) with layer caching |
 
 ## Limitations
 

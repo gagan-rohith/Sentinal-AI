@@ -1,0 +1,40 @@
+# syntax=docker/dockerfile:1
+
+# The critic A2A service. It reviews plans against the evidence they cite and never embeds
+# text, so unlike the API image it leaves out torch and the embedding model.
+FROM python:3.11-slim AS deps
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN python -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+COPY requirements.txt /tmp/requirements.txt
+RUN grep -v '^sentence-transformers' /tmp/requirements.txt > /tmp/requirements-critic.txt \
+    && pip install -r /tmp/requirements-critic.txt
+
+FROM python:3.11-slim AS runtime
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    CRITIC_PORT=8100
+RUN useradd --create-home --uid 10001 sentinel
+COPY --from=deps /opt/venv /opt/venv
+WORKDIR /app
+COPY agents ./agents
+COPY app ./app
+COPY auth ./auth
+COPY core ./core
+COPY critic_service ./critic_service
+COPY data ./data
+COPY evals ./evals
+COPY graph ./graph
+COPY observability ./observability
+COPY retrieval ./retrieval
+COPY storage ./storage
+COPY tools ./tools
+USER sentinel
+EXPOSE 8100
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
+    CMD python -c "import sys, urllib.request; \
+sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=4).status == 200 else 1)"
+CMD ["python", "-m", "critic_service"]

@@ -3,11 +3,18 @@ name: sentinel-ai
 # Local stack. From the repository root:
 #   docker compose up --build                            # Elasticsearch, index job, API
 #   docker compose --profile frontend up --build         # plus the web UI on :3000
-#   docker compose --profile observability up --build    # plus Prometheus on :9090
+#   docker compose --profile observability up --build    # plus Prometheus on :9090 and
+#                                                        # Jaeger on :16686 (traces)
 #   docker compose --profile kibana up                   # plus Kibana on :5601
 #
 # API keys and optional settings (ANTHROPIC_API_KEY, LANGSMITH_API_KEY) come from the
 # repository's .env. Values below override .env entries that only make sense on the host.
+#
+# The API delegates plan review to the critic service over A2A, so .env needs the key pair
+# from `python -m critic_service.keys`: CRITIC_API_KEY (the API sends it) and
+# CRITIC_API_KEY_SHA256 (the critic checks against it).
+# To see traces, start the observability profile and set
+# OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318 in .env.
 
 x-app-env: &app-env
   SEARCH_BACKEND: elasticsearch
@@ -53,6 +60,23 @@ services:
         condition: service_healthy
     restart: "no"
 
+  # The critic agent as its own A2A service. It needs no Elasticsearch and no model.
+  critic:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.critic
+    image: sentinel-ai-critic:local
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      LOG_FORMAT: json
+      CRITIC_PUBLIC_URL: http://critic:8100
+      OTEL_SERVICE_NAME: sentinel-critic
+    ports:
+      - "8100:8100"
+    restart: unless-stopped
+
   api:
     build:
       context: ..
@@ -66,6 +90,9 @@ services:
       DATABASE_PATH: /data/sentinel.db
       # The ingest job owns indexing; the API only checks health.
       AUTO_INDEX: "false"
+      CRITIC_MODE: a2a
+      CRITIC_URL: http://critic:8100
+      OTEL_SERVICE_NAME: sentinel-api
     ports:
       - "8000:8000"
     volumes:
@@ -73,6 +100,8 @@ services:
     depends_on:
       ingest:
         condition: service_completed_successfully
+      critic:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -101,6 +130,14 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
+
+  # Trace viewer for the orchestrator -> critic hop. UI on :16686, OTLP/HTTP on :4318.
+  jaeger:
+    image: jaegertracing/jaeger:2.21.0
+    profiles: ["observability"]
+    ports:
+      - "16686:16686"
+      - "4318:4318"
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.15.3

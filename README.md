@@ -75,15 +75,26 @@ flowchart LR
         Graph --> LLM[Claude via Anthropic SDK<br/>or deterministic heuristics]
     end
 
+    Graph -->|A2A JSON-RPC<br/>X-API-Key, traceparent| Critic
+
+    subgraph CriticSvc[Critic service]
+        Critic[A2A server<br/>skill: review_remediation_plan] --> Review[Critic checks<br/>code checks + Claude or heuristic]
+    end
+
     Tools --> Ops[Simulated ops backend<br/>logs, metrics, deploys, k8s]
     Tools --> Search[Hybrid search<br/>BM25 + kNN, RRF]
     Search --> ES[(Elasticsearch 8)]
     Graph --> DB[(SQLite<br/>runs, approvals, checkpoints)]
-    API --> Prom[Prometheus /metrics]
+    Prom[Prometheus] -->|scrape /metrics| API
+    Prom -->|scrape /metrics| Critic
+    API -.->|OTLP| Jaeger[Jaeger<br/>one trace per run]
+    Critic -.->|OTLP| Jaeger
 ```
 
 The tool registry is the only place tools are called from, by the agents, the REST API and
-the MCP server alike, so permission checks and the approval gate cannot be bypassed.
+the MCP server alike, so permission checks and the approval gate cannot be bypassed. The
+critic, which reviews every plan before it reaches a human, runs as a separate A2A service
+(see [A2A design](#a2a-design)).
 
 ### Agent workflow
 
@@ -118,6 +129,47 @@ flowchart TD
 
 Design decisions and trade-offs are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
+### A2A design
+
+The critic is the one agent whose job is to doubt the others: it checks that a plan's
+evidence ids exist, that the chosen root cause is not contradicted by its own evidence, and
+that every proposed action is valid, and it can send work back. It runs as a standalone
+service that the orchestrator calls over the [Agent2Agent protocol](https://a2a-protocol.org)
+(`a2a-sdk` 1.x, spec 1.0).
+
+**Why split it out.**
+
+- **Independent review.** The reviewer runs apart from the planner, in its own process,
+  with its own configuration. It can use a different model from the agents it reviews, and
+  it holds no tool permissions or API keys, only the hash of the key callers must present.
+- **A standard boundary.** Any A2A client can call it and any A2A agent can replace it: a
+  critic written in another framework, run by another team, or using another model, as long
+  as it offers the `review_remediation_plan` skill.
+- **Independent scaling.** Reviews are stateless, so the critic runs several replicas in
+  Kubernetes while the orchestrator stays at one (its SQLite state allows only one).
+
+**How the hop works.**
+
+1. The orchestrator reads the critic's Agent Card (`/.well-known/agent-card.json`), which
+   advertises the skill, the JSON-RPC endpoint and the API-key scheme.
+2. It sends the plan with the evidence it cites as a JSON data part. Both sides validate it
+   with the same Pydantic models.
+3. The critic runs the same checks as the in-process critic and returns
+   `{approved, reasons, risk_level}` plus the detailed verdict, so retry routing is unchanged.
+4. If the critic is down, times out, rejects the request or returns something malformed, the
+   plan counts as not approved: no retries, the reason goes into the report, and the run goes
+   to a human, even when the plan changes nothing in production.
+
+The key pair comes from `python -m critic_service.keys`: the orchestrator holds the key, the
+critic only its SHA-256 hash, and the SDK's auth interceptor sends it as the card asks. A W3C
+`traceparent` header carries the trace across, so one OpenTelemetry trace, with the run's
+SentinelAI trace id, spans both services.
+
+**Trade-offs.** The hop adds a network call and a failure mode the in-process critic does not
+have, which is why failures fall back to human review. `CRITIC_MODE=local` keeps the critic
+in-process, and the tests, the benchmark and `make demo` use it by default; Docker Compose and
+Kubernetes run it as a service.
+
 ### Tech stack
 
 | Area | Choice |
@@ -127,8 +179,9 @@ Design decisions and trade-offs are in [ARCHITECTURE.md](ARCHITECTURE.md).
 | Retrieval | Elasticsearch 8.15, BM25 + dense vectors (all-MiniLM-L6-v2, 384 dims), reciprocal rank fusion |
 | Storage | SQLite (aiosqlite) for incidents, runs, approvals and graph checkpoints |
 | Tool protocol | MCP Python SDK, stdio and streamable HTTP |
+| Agent protocol | A2A (`a2a-sdk` 1.x, spec 1.0) over JSON-RPC, for the critic service |
 | Frontend | React 19, TypeScript, Vite |
-| Observability | Prometheus metrics, trace ids, optional LangSmith |
+| Observability | Prometheus metrics, OpenTelemetry traces (Jaeger), trace ids, optional LangSmith |
 | Delivery | Docker Compose, Kubernetes manifests, Terraform (AWS ECS Fargate), GitHub Actions |
 
 ## Quick start
@@ -141,18 +194,20 @@ cd sentinel-ai
 cp .env.example .env
 python -m auth.api_keys operator     # prints a key and a config line
 python -m auth.api_keys admin
+python -m critic_service.keys        # key pair for the critic service
 ```
 
 Put both `config:` lines in `API_KEYS` in `.env`, comma separated
 (`API_KEYS=operator:<hash>,admin:<hash>`), and keep the two `key:` values somewhere safe; only
-their hashes are stored. Then:
+their hashes are stored. Copy the two `CRITIC_API_KEY...` lines into `.env` as printed. Then:
 
 ```bash
 docker compose --profile frontend up --build
 ```
 
 The first build takes several minutes (CPU PyTorch and the embedding model are baked into the
-image). Elasticsearch starts, a one-off job builds the search index, then the API starts.
+image). Elasticsearch and the critic service start, a one-off job builds the search index,
+then the API starts.
 
 - Web UI: http://localhost:3000 (paste the operator key; switch to the admin key to approve)
 - API docs: http://localhost:8000/docs
@@ -307,6 +362,9 @@ How to read this:
 - Structured JSON logs with a trace id per request, carried into the agent run.
 - Prometheus metrics at `/metrics`: request rates and latency, tool and agent calls and
   latency, runs by outcome, critic retries, approval decisions, and LLM tokens and cost. `docker compose --profile observability up` adds Prometheus.
+- OpenTelemetry traces: one trace per run spans the API and the critic service, with the run's
+  trace id. `docker compose --profile observability up` adds Jaeger on :16686; set
+  `OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318` in `.env` to send traces to it.
 - LangSmith tracing turns on only when `LANGSMITH_API_KEY` is set.
 - Docker images run as non-root with the embedding model baked in. Kubernetes manifests in
   `k8s/` and an AWS ECS Fargate stack in `terraform/` (validated and planned, never applied).
@@ -342,6 +400,7 @@ agents/          agent nodes, prompts, heuristics, evidence catalog
 app/             FastAPI app, routes, dependency container, terminal demo
 auth/            API keys, roles, permissions, JWT validation
 core/            domain models, enums, typed errors
+critic_service/  the critic as an A2A service, and the orchestrator's client for it
 data/            synthetic data generator, incidents, logs, runbooks
 evals/           benchmark, evaluators, datasets, reports
 graph/           LangGraph state, routing, checkpointer, run manager

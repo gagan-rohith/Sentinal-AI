@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel-critic
+  namespace: sentinel
+  labels:
+    app.kubernetes.io/name: sentinel-critic
+    app.kubernetes.io/part-of: sentinel-ai
+spec:
+  # Stateless: each review is independent, so the critic can run several replicas.
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sentinel-critic
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sentinel-critic
+        app.kubernetes.io/part-of: sentinel-ai
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8100"
+        prometheus.io/path: /metrics
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: critic
+          image: sentinel-ai-critic:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8100
+          envFrom:
+            - configMapRef:
+                name: sentinel-config
+            # Only the critic's own secret: the hash of its API key and, for LLM mode,
+            # ANTHROPIC_API_KEY. It never sees the API's keys.
+            - secretRef:
+                name: sentinel-critic-secrets
+          env:
+            - name: OTEL_SERVICE_NAME
+              value: sentinel-critic
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

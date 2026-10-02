@@ -23,3 +23,8 @@ data:
   LLM_MODEL: claude-sonnet-5
   TOOL_TIMEOUT_SECONDS: "5"
   MAX_CRITIC_RETRIES: "3"
+  # The API delegates plan review to the critic service over A2A.
+  CRITIC_MODE: a2a
+  CRITIC_URL: http://sentinel-critic.sentinel.svc.cluster.local:8100
+  CRITIC_PUBLIC_URL: http://sentinel-critic.sentinel.svc.cluster.local:8100
+  CRITIC_TIMEOUT_SECONDS: "10"
