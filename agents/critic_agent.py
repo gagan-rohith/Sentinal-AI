@@ -4,8 +4,8 @@ from pydantic import ValidationError
 
 from agents import prompts
 from agents.evidence import EvidenceKind, evidence_ids, render
-from agents.llm import run_step
-from agents.schemas import CriticReview, CriticVerdict, StepKind
+from agents.llm import StructuredLLM, run_step
+from agents.schemas import AgentCall, CriticReview, CriticVerdict, StepKind
 from core.exceptions import ToolNotFoundError
 from graph.state import AgentDeps, IncidentState
 from tools.tool_registry import ToolRegistry
@@ -136,12 +136,15 @@ def critic_prompt(state: IncidentState, findings: list[Finding]) -> str:
     )
 
 
-async def critic_node(deps: AgentDeps, state: IncidentState) -> dict[str, Any]:
-    findings = code_checks(state, deps.tools)
+async def review_plan(
+    state: IncidentState, registry: ToolRegistry, llm: StructuredLLM | None
+) -> tuple[CriticReview, AgentCall]:
+    """The critic's judgment, shared by the graph node and the A2A critic service."""
+    findings = code_checks(state, registry)
     confidence = state.get("root_cause_confidence", 0.0)
     review, call = await run_step(
         "critic",
-        deps.llm,
+        llm,
         CriticReview,
         prompts.CRITIC,
         lambda: critic_prompt(state, findings),
@@ -156,7 +159,11 @@ async def critic_node(deps: AgentDeps, state: IncidentState) -> dict[str, Any]:
                 "issues": [m for _, m in findings] + review.issues,
             }
         )
+    return review, call
 
+
+async def critic_node(deps: AgentDeps, state: IncidentState) -> dict[str, Any]:
+    review, call = await review_plan(state, deps.tools, deps.llm)
     retries = state.get("retry_count", 0)
     update: dict[str, Any] = {"critic_feedback": review, "agent_calls": [call]}
     if review.verdict is not CriticVerdict.APPROVE:

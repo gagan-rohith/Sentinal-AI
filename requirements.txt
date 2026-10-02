@@ -16,4 +16,5 @@ anthropic>=1.8
 mcp>=2.2,<3
 prometheus-client>=0.20
 langsmith>=0.14
+a2a-sdk[http-server,telemetry]>=1.1,<2
 sentence-transformers>=6.0

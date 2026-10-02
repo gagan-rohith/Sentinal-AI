@@ -27,6 +27,7 @@ dependencies = [
     "mcp>=2.2,<3",
     "prometheus-client>=0.20",
     "langsmith>=0.14",
+    "a2a-sdk[http-server,telemetry]>=1.1,<2",
 ]
 
 [project.optional-dependencies]
@@ -50,6 +51,7 @@ include = [
     "agents*",
     "auth*",
     "core*",
+    "critic_service*",
     "data*",
     "evals*",
     "graph*",
@@ -96,8 +98,8 @@ addopts = "-ra"
 
 [tool.coverage.run]
 source = [
-    "agents", "app", "auth", "core", "data", "evals", "graph", "mcp_server", "observability",
-    "retrieval", "storage", "tools",
+    "agents", "app", "auth", "core", "critic_service", "data", "evals", "graph", "mcp_server",
+    "observability", "retrieval", "storage", "tools",
 ]
 omit = ["*/__main__.py"]
 
