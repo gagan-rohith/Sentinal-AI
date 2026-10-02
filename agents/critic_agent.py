@@ -162,8 +162,10 @@ async def review_plan(
     return review, call
 
 
-async def critic_node(deps: AgentDeps, state: IncidentState) -> dict[str, Any]:
-    review, call = await review_plan(state, deps.tools, deps.llm)
+def apply_review(
+    deps: AgentDeps, state: IncidentState, review: CriticReview, call: AgentCall
+) -> dict[str, Any]:
+    """The state update for a review, wherever it ran: retry while the budget lasts."""
     retries = state.get("retry_count", 0)
     update: dict[str, Any] = {"critic_feedback": review, "agent_calls": [call]}
     if review.verdict is not CriticVerdict.APPROVE:
@@ -172,3 +174,27 @@ async def critic_node(deps: AgentDeps, state: IncidentState) -> dict[str, Any]:
         else:
             update["unresolved_critic_issues"] = True
     return update
+
+
+def unavailable_update(reason: str) -> dict[str, Any]:
+    """No review could be obtained: treat the plan as not approved and send it to a human.
+
+    Retrying would only hit the same outage, so the retry budget is left alone, and the
+    run goes to human approval even when the plan changes nothing in production.
+    """
+    review = CriticReview(
+        verdict=CriticVerdict.NEED_MORE_EVIDENCE,
+        confidence=0.0,
+        issues=[f"critic unavailable: {reason}"],
+    )
+    return {
+        "critic_feedback": review,
+        "unresolved_critic_issues": True,
+        "approval_required": True,
+        "data_gaps": [f"critic review failed ({reason}); plan sent to human review"],
+    }
+
+
+async def critic_node(deps: AgentDeps, state: IncidentState) -> dict[str, Any]:
+    review, call = await review_plan(state, deps.tools, deps.llm)
+    return apply_review(deps, state, review, call)

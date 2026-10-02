@@ -14,6 +14,7 @@ from agents.retrieval_agent import retrieval_node
 from agents.root_cause_agent import root_cause_node
 from agents.supervisor import supervisor_node
 from agents.triage_agent import triage_node
+from critic_service.client import remote_critic_node
 from graph.routing import route_after_approval, route_after_critic, route_from_supervisor
 from graph.state import AgentDeps, IncidentState
 
@@ -48,7 +49,9 @@ def build_incident_graph(
     graph.add_node("retrieval", _bind(retrieval_node, deps))
     graph.add_node("root_cause", _bind(root_cause_node, deps))
     graph.add_node("remediation", _bind(remediation_node, deps))
-    graph.add_node("critic", _bind(critic_node, deps))
+    # The same "critic" node either way, so routing, stages and reports do not change.
+    critic = remote_critic_node if deps.critic is not None else critic_node
+    graph.add_node("critic", _bind(critic, deps))
     graph.add_node("human_approval", _bind(human_approval_node, deps))
     graph.add_node("action_execution", _bind(action_execution_node, deps))
     graph.add_node("postmortem", _bind(postmortem_node, deps))

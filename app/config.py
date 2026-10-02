@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = Field(default=60.0, gt=0)
     max_critic_retries: int = Field(default=3, ge=0, le=10)
 
+    # local runs the critic in-process; a2a delegates plan review to the critic service.
+    critic_mode: Literal["local", "a2a"] = "local"
+    critic_url: str = "http://localhost:8100"
+    critic_timeout_seconds: float = Field(default=10.0, gt=0)
+
     eval_reports_dir: Path = Path("evals/reports")
 
     # LangSmith tracing turns on only when a key is set.

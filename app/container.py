@@ -8,6 +8,7 @@ from app.config import Settings
 from auth.api_keys import ApiKeyAuthenticator, parse_key_config
 from auth.permissions import AGENT_PRINCIPAL
 from core.exceptions import SearchUnavailableError
+from critic_service.client import A2ACriticClient
 from data.loader import load_incidents
 from evals.service import EvaluationService
 from graph.checkpoint import open_checkpointer
@@ -72,6 +73,7 @@ class Container:
             llm=create_llm(settings),
             principal=AGENT_PRINCIPAL,
             max_retries=settings.max_critic_retries,
+            critic=_remote_critic(settings),
         )
         checkpointer = await open_checkpointer(db.conn)
         runs = RunRepository(db)
@@ -97,6 +99,13 @@ class Container:
         await self.analyzer.shutdown()
         await self.search_backend.close()
         await self.db.close()
+
+
+def _remote_critic(settings: Settings) -> A2ACriticClient | None:
+    if settings.critic_mode != "a2a":
+        return None
+    log.info("critic_mode_a2a", url=settings.critic_url)
+    return A2ACriticClient(settings.critic_url, timeout_s=settings.critic_timeout_seconds)
 
 
 def create_llm(settings: Settings) -> StructuredLLM | None:

@@ -54,6 +54,11 @@ class LLMUnavailableError(SentinelError):
     code = "llm_unavailable"
 
 
+class CriticUnavailableError(SentinelError):
+    status_code = 503
+    code = "critic_unavailable"
+
+
 class ToolTimeoutError(SentinelError):
     status_code = 504
     code = "tool_timeout"

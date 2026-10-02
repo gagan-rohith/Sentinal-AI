@@ -18,6 +18,7 @@ from agents.schemas import (
 from auth.permissions import Principal
 from core.enums import ApprovalStatus
 from core.models import Incident, ServiceHealth
+from critic_service.contract import RemoteCritic
 from retrieval.models import SearchHit
 from tools.deployments import DeploymentStatusResult, RecentDeploymentsResult
 from tools.logs import LogsResult
@@ -86,3 +87,5 @@ class AgentDeps:
     # Identity the agents use for tool calls. Never allowed to run destructive tools.
     principal: Principal
     max_retries: int = MAX_RETRIES
+    # Set when CRITIC_MODE=a2a: plan review is delegated to the critic service.
+    critic: RemoteCritic | None = None

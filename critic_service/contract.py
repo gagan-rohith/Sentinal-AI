@@ -4,7 +4,8 @@ Requests and results travel as A2A data parts (JSON objects). Both sides validat
 these models, so a malformed payload fails loudly instead of reaching the critic or the graph.
 """
 
-from typing import Any
+from collections.abc import Mapping
+from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
@@ -33,6 +34,19 @@ class ReviewRequest(BaseModel):
     root_cause_confidence: float = Field(ge=0, le=1)
     hypotheses: list[Hypothesis]
     evidence: list[Evidence]
+
+    @classmethod
+    def from_state(cls, state: Mapping[str, Any]) -> "ReviewRequest":
+        incident = state["incident"]
+        return cls(
+            incident_id=incident.incident_id,
+            service=incident.service,
+            remediation_plan=state["remediation_plan"],
+            selected_root_cause=state["selected_root_cause"],
+            root_cause_confidence=state.get("root_cause_confidence", 0.0),
+            hypotheses=state.get("root_cause_hypotheses", []),
+            evidence=state.get("evidence", []),
+        )
 
     def as_state(self) -> dict[str, Any]:
         """The graph state keys the critic reads."""
@@ -79,3 +93,9 @@ class ReviewResult(BaseModel):
             issues=self.reasons,
             unsupported_claims=self.unsupported_claims,
         )
+
+
+class RemoteCritic(Protocol):
+    """What the graph needs from a remote critic. Raises CriticUnavailableError on failure."""
+
+    async def review(self, request: ReviewRequest) -> ReviewResult: ...
