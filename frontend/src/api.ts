@@ -1,6 +1,8 @@
 // Typed client for the SentinelAI API. Types mirror the backend's Pydantic models,
 // limited to the fields this page shows.
 
+import { demoApi } from "./demo/replay";
+
 export type Severity = "sev1" | "sev2" | "sev3" | "sev4";
 export type RunStatus = "queued" | "running" | "awaiting_approval" | "completed" | "failed";
 export type Risk = "low" | "medium" | "high";
@@ -182,7 +184,7 @@ async function request<T>(path: string, key: string, init: RequestInit = {}): Pr
   return (await response.json()) as T;
 }
 
-export const api = {
+const liveApi = {
   health: async (): Promise<{ status: string; checks: Record<string, string> }> => {
     const response = await fetch("/api/health");
     return response.json();
@@ -207,3 +209,9 @@ export const api = {
     }),
   report: (key: string, runId: string) => request<FinalReport>(`/agents/${runId}/report`, key),
 };
+
+export type Api = typeof liveApi;
+
+// Built with VITE_DEMO=1 for the static demo site: recorded runs replace the HTTP API.
+export const DEMO = import.meta.env.VITE_DEMO === "1";
+export const api: Api = DEMO ? demoApi : liveApi;

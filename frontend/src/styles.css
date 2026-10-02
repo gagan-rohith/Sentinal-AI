@@ -180,6 +180,54 @@ code {
   min-width: min(100%, 360px);
 }
 
+/* Replay mode */
+
+.role-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+}
+
+.role-switch .muted {
+  padding: 0 6px;
+}
+
+.seg {
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid transparent;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+}
+
+.seg.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.demo-banner p {
+  margin: 0;
+}
+
+.demo-banner .actions {
+  margin-top: 10px;
+}
+
+a.button {
+  display: inline-block;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  text-decoration: none;
+}
+
 /* Layout */
 
 .page {

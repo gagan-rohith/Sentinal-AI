@@ -93,7 +93,9 @@ export function Overview({ apiKey, health, incidents, onOpenRun }: Props) {
         <StatTile
           label="API"
           value={health}
-          tone={health === "ok" ? "good" : health === "checking" ? undefined : "critical"}
+          tone={
+            health === "ok" || health === "replay" ? "good" : health === "checking" ? undefined : "critical"
+          }
         />
       </div>
 
