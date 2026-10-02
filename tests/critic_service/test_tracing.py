@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from typing import Any
 
 import pytest
+from opentelemetry import trace
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -11,6 +12,7 @@ from auth.permissions import AGENT_PRINCIPAL
 from critic_service.client import A2ACriticClient, remote_critic_node
 from graph.state import AgentDeps
 from observability.otel import configure_tracing, otel_trace_id
+from observability.tracing import request_trace_id
 from tools.tool_registry import ToolRegistry
 
 TRACE_ID = "0af7651916cd43dd8448eb211c80319c"
@@ -95,3 +97,14 @@ def test_trace_ids_map_to_valid_otel_ids() -> None:
     custom = otel_trace_id("caller-supplied-id")
     assert custom == otel_trace_id("caller-supplied-id")
     assert 0 < custom < 2**128
+
+
+def test_request_trace_id_adopts_the_active_span() -> None:
+    # FastAPI opens a request span before SentinelAI's middleware runs; the run's trace id
+    # must be that span's, so reports and the trace viewer agree.
+    tracer = trace.get_tracer(__name__)
+    with tracer.start_as_current_span("request") as span:
+        expected = format(span.get_span_context().trace_id, "032x")
+        assert request_trace_id(None) == expected
+        assert request_trace_id("caller-supplied-id") == "caller-supplied-id"
+    assert request_trace_id(None) != expected

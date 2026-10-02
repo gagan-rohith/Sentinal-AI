@@ -11,6 +11,7 @@ import time
 import uuid
 
 import structlog
+from opentelemetry import trace
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from observability.metrics import record_http
@@ -34,6 +35,22 @@ def accept_trace_id(value: str | None) -> str:
     return value if value and _VALID_TRACE_ID.fullmatch(value) else new_trace_id()
 
 
+def _active_otel_trace_id() -> str | None:
+    context = trace.get_current_span().get_span_context()
+    return format(context.trace_id, "032x") if context.is_valid else None
+
+
+def request_trace_id(header: str | None) -> str:
+    """The caller's id if it sent one; otherwise the active OpenTelemetry trace's id.
+
+    FastAPI opens its own request span before this middleware runs. Adopting its trace id
+    keeps the id in reports and logs equal to the one in the trace viewer.
+    """
+    if header and _VALID_TRACE_ID.fullmatch(header):
+        return header
+    return _active_otel_trace_id() or new_trace_id()
+
+
 class TraceMiddleware:
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
@@ -44,7 +61,7 @@ class TraceMiddleware:
             return
 
         headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope["headers"]}
-        trace_id = accept_trace_id(headers.get(TRACE_HEADER))
+        trace_id = request_trace_id(headers.get(TRACE_HEADER))
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(trace_id=trace_id)
         started = time.perf_counter()
